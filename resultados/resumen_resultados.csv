@@ -1,0 +1,25 @@
+experimento,indicador,valor
+E1,Iluminancia media [lx],317
+E1,Uniformidad U0 = Emin/Emed,0.41
+E2,Potencia recibida min/max [dBm],-8.5 / -3.6
+E2,SNR min/mediana/max [dB],18.0 / 39.5 / 50.5
+E2,tau_RMS max [ns],7.3
+E3,S0 · Ideal cobertura [%],100.0
+E3,S0 · Ideal SNR mediana [dB],39.5
+E3,"S1 · Polvo (V=20 m, 30 días) cobertura [%]",100.0
+E3,"S1 · Polvo (V=20 m, 30 días) SNR mediana [dB]",27.9
+E3,S2 · Temperatura 70 °C cobertura [%],100.0
+E3,S2 · Temperatura 70 °C SNR mediana [dB],39.2
+E3,S3 · Luz ambiente intensa cobertura [%],100.0
+E3,S3 · Luz ambiente intensa SNR mediana [dB],38.4
+E3,S4 · Obstáculos cobertura [%],91.5
+E3,S4 · Obstáculos SNR mediana [dB],39.6
+E3,S5 · Combinado cobertura [%],73.8
+E3,S5 · Combinado SNR mediana [dB],17.8
+E6,"ΔSNR mediana a 70 °C, LED 0,4 %/°C [dB]",-0.34
+E6,ΔSNR mediana a 85 °C con protección térmica [dB],-2.51
+E9,VLC SNR mediana (con máquinas) [dB],40.2
+E9,VLC BER mediana (con máquinas),0.0e+00
+E10,Diseño base · ubicaciones con disponibilidad ≥99 % [%],14.4
+E10,Diseño mejorado · ubicaciones con disponibilidad ≥99 % [%],64.8
+E10,Mejorado + respaldo Wi-Fi · ubicaciones con disponibilidad ≥99 % [%],96.4

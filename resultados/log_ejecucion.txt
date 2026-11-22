@@ -1,0 +1,62 @@
+[   0.0 s] Grilla de mapas: 3600 puntos (2894 en área libre)
+[   0.4 s] E1 listo
+[   1.9 s] Canal sin obstáculos listo
+[   8.9 s] Canal con obstáculos fijos listo
+[   9.7 s] E2 listo
+[  11.0 s] E3 listo
+[  13.6 s] Grilla de barridos lista (716 puntos)
+[  14.1 s] E4 listo
+[  14.5 s] E5 listo
+[  15.2 s] E6 listo
+[  15.6 s] E7 listo
+[  23.6 s] E8: 0 operarios listo
+[  32.0 s] E8: 5 operarios listo
+[  43.4 s] E8: 10 operarios listo
+[  60.1 s] E8: 20 operarios listo
+[  81.6 s] E8: 30 operarios listo
+[ 108.3 s] E8: 40 operarios listo
+[ 108.5 s] E8 listo
+[ 109.6 s] E9 listo
+[ 118.4 s] E10 listo
+E1 | Iluminancia media [lx] | 317
+E1 | Uniformidad U0 = Emin/Emed | 0.41
+E2 | Potencia recibida min/max [dBm] | -8.5 / -3.6
+E2 | SNR min/mediana/max [dB] | 18.0 / 39.5 / 50.5
+E2 | tau_RMS max [ns] | 7.3
+E3 | S0 · Ideal cobertura [%] | 100.0
+E3 | S0 · Ideal SNR mediana [dB] | 39.5
+E3 | S1 · Polvo (V=20 m, 30 días) cobertura [%] | 100.0
+E3 | S1 · Polvo (V=20 m, 30 días) SNR mediana [dB] | 27.9
+E3 | S2 · Temperatura 70 °C cobertura [%] | 100.0
+E3 | S2 · Temperatura 70 °C SNR mediana [dB] | 39.2
+E3 | S3 · Luz ambiente intensa cobertura [%] | 100.0
+E3 | S3 · Luz ambiente intensa SNR mediana [dB] | 38.4
+E3 | S4 · Obstáculos cobertura [%] | 91.5
+E3 | S4 · Obstáculos SNR mediana [dB] | 39.6
+E3 | S5 · Combinado cobertura [%] | 73.8
+E3 | S5 · Combinado SNR mediana [dB] | 17.8
+E6 | ΔSNR mediana a 70 °C, LED 0,4 %/°C [dB] | -0.34
+E6 | ΔSNR mediana a 85 °C con protección térmica [dB] | -2.51
+E9 | VLC SNR mediana (con máquinas) [dB] | 40.2
+E9 | VLC BER mediana (con máquinas) | 0.0e+00
+E10 | Diseño base · ubicaciones con disponibilidad ≥99 % [%] | 14.4
+E10 | Diseño mejorado · ubicaciones con disponibilidad ≥99 % [%] | 64.8
+E10 | Mejorado + respaldo Wi-Fi · ubicaciones con disponibilidad ≥99 % [%] | 96.4
+
+E8 disponibilidad:
+VLC · 9 luminarias, FOV 60° ['89', '87', '81', '71', '66', '60']
+VLC · 9 luminarias, FOV 80° ['89', '84', '74', '64', '57', '52']
+VLC · 9 luminarias, FOV 40° ['90', '88', '82', '72', '64', '57']
+VLC · 4 luminarias (misma iluminancia), FOV 60° ['88', '83', '75', '64', '59', '52']
+Wi-Fi 2,4 GHz (EMI +20 dB) ['94', '94', '94', '94', '94', '92']
+Híbrido VLC (9 lum., FOV 60°) + Wi-Fi ['96', '97', '97', '96', '96', '96']
+
+E9 Wi-Fi (EMI, cobertura, SNR med, BER med):
+0 (np.float64(100.0), np.float64(57.19857393017976), np.float64(0.0))
+10 (np.float64(99.86033519553072), np.float64(49.79494703523733), np.float64(3.4384056861019047e-121))
+20 (np.float64(93.01675977653632), np.float64(40.165660148993155), np.float64(6.67409124085054e-18))
+30 (np.float64(73.32402234636871), np.float64(30.20453311202638), np.float64(4.310499949736416e-06))
+40 (np.float64(38.96648044692738), np.float64(20.208439614050942), np.float64(0.0002457927255731952))
+50 (np.float64(2.793296089385475), np.float64(10.208830457588522), np.float64(0.006727715402178806))
+E9 VLC cobertura vs V: [(200, '89.8'), (100, '89.8'), (50, '89.7'), (30, '89.4'), (20, '87.0'), (15, '85.9'), (10, '84.2'), (7, '74.7'), (5, '0.0')]
+[ 118.4 s] Terminado
