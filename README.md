@@ -45,6 +45,8 @@ El sistema comunica en tiempo real consignas de navegación, telemetría y diagn
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate        # En Windows: .venv\Scripts\activate
+source .venv/bin/activate.fish   # En terminal fish
+
 pip install -r requirements.txt
 
 # 1. Ejecutar suite de verificación física (requiere pytest: pip install pytest)
