@@ -1,25 +1,34 @@
-experimento,indicador,valor
-E1,Iluminancia media [lx],317
-E1,Uniformidad U0 = Emin/Emed,0.41
-E2,Potencia recibida min/max [dBm],-8.5 / -3.6
-E2,SNR min/mediana/max [dB],18.0 / 39.5 / 50.5
-E2,tau_RMS max [ns],7.3
-E3,S0 · Ideal cobertura [%],100.0
-E3,S0 · Ideal SNR mediana [dB],39.5
-E3,"S1 · Polvo (V=20 m, 30 días) cobertura [%]",100.0
-E3,"S1 · Polvo (V=20 m, 30 días) SNR mediana [dB]",27.9
-E3,S2 · Temperatura 70 °C cobertura [%],100.0
-E3,S2 · Temperatura 70 °C SNR mediana [dB],39.2
-E3,S3 · Luz ambiente intensa cobertura [%],100.0
-E3,S3 · Luz ambiente intensa SNR mediana [dB],38.4
-E3,S4 · Obstáculos cobertura [%],91.5
-E3,S4 · Obstáculos SNR mediana [dB],39.6
-E3,S5 · Combinado cobertura [%],73.8
-E3,S5 · Combinado SNR mediana [dB],17.8
-E6,"ΔSNR mediana a 70 °C, LED 0,4 %/°C [dB]",-0.34
-E6,ΔSNR mediana a 85 °C con protección térmica [dB],-2.51
-E9,VLC SNR mediana (con máquinas) [dB],40.2
-E9,VLC BER mediana (con máquinas),0.0e+00
-E10,Diseño base · ubicaciones con disponibilidad ≥99 % [%],14.4
-E10,Diseño mejorado · ubicaciones con disponibilidad ≥99 % [%],64.8
-E10,Mejorado + respaldo Wi-Fi · ubicaciones con disponibilidad ≥99 % [%],96.4
+﻿experimento,indicador,valor
+E1,Grilla base 3×3 · Iluminancia media nave vacía (c/refl.) [lx],349
+E1,"Grilla base 3×3 · Uniformidad U0 nave vacía (EN ≥ 0,60)",0.46
+E1,Grilla optimizada 4×4 · Iluminancia media nave vacía [lx],302
+E1,"Grilla optimizada 4×4 · Uniformidad U0 nave vacía (EN ≥ 0,60)",0.61
+E1,Uniformidad en zona de tránsito AGV con máquinas (base / 4×4),0.08 / 0.05
+E2,Potencia óptica recibida min/max [dBm],-8.5 / -3.6
+E2,SNR intermedia min/mediana/max a 10 Mb/s [dB],17.4 / 28.7 / 34.5
+E2,Goodput medio caso referencia [Mb/s],10.00
+E2,tau_RMS máximo [ns],7.3
+E3,"S0 · Ideal (25 °C, limpio) · Cobertura [%] / Goodput [Mb/s]",100.0 % / 10.00
+E3,"S0 · Ideal (25 °C, limpio) · SNR mediana [dB]",28.7
+E3,S1 · Polvo V=20 m (c/scatt.) + 30 d · Cobertura [%] / Goodput [Mb/s],100.0 % / 10.00
+E3,S1 · Polvo V=20 m (c/scatt.) + 30 d · SNR mediana [dB],24.2
+E3,S2 · Calor T_amb=70 °C (Tj=100 °C) · Cobertura [%] / Goodput [Mb/s],100.0 % / 10.00
+E3,S2 · Calor T_amb=70 °C (Tj=100 °C) · SNR mediana [dB],28.6
+E3,S3 · Luz ambiente intensa (5100 µA) · Cobertura [%] / Goodput [Mb/s],100.0 % / 10.00
+E3,S3 · Luz ambiente intensa (5100 µA) · SNR mediana [dB],28.6
+E3,S4 · Obstáculos (máq. + 12 op. + 3 grúas) · Cobertura [%] / Goodput [Mb/s],92.6 % / 9.46
+E3,S4 · Obstáculos (máq. + 12 op. + 3 grúas) · SNR mediana [dB],30.8
+E3,S5 · Combinado (todos los factores) · Cobertura [%] / Goodput [Mb/s],87.0 % / 8.85
+E3,S5 · Combinado (todos los factores) · SNR mediana [dB],24.1
+E6,"ΔSNR mediana a T_amb=70 °C (Tj=102 °C, régimen ruido hostil) [dB]",-0.33
+E6,"ΔSNR mediana a T_amb=85 °C (Tj=117 °C, régimen ruido hostil) [dB]",-1.01
+E9,"Wi-Fi (EMI espacial planta, sin FEC / +FEC) · ubicaciones ≥ 99 % [%]",58.3 / 76.1
+E9,VLC (base 9 lum. / 16 lum. ADR+FEC) · ubicaciones ≥ 99 % [%],84.4 / 100.0
+E9,Eficiencia energética incremental VLC ADR+4×4 vs Wi-Fi+FEC [Mbit/J],0.96 vs 0.69
+E9,"Uplink IR 850 nm (4×4, V=20 m, 7 d, 70 °C) · Cobertura [%] / Goodput [Mb/s]",98.9 % / 1.86
+E10,1. Base VLC · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J],60.0 % / 9.40 / 0.99
+E10,2. +Filtro +7 días · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J],62.2 % / 9.55 / 1.01
+E10,3. +RS FEC · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J],71.7 % / 9.10 / 0.96
+E10,4. +ADR+4×4 Autónomo · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J],78.9 % / 9.30 / 0.95
+E10,5. Wi-Fi +FEC · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J],70.6 % / 9.31 / 0.69
+E10,6. Híbrido VLC+Wi-Fi · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J],99.4 % / 9.37 / 0.40
