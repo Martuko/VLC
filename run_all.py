@@ -2,7 +2,7 @@
 """
 run_all.py
 ==========
-Ejecuta los 10 experimentos (E1–E10) del simulador VLC industrial mejorado en
+Ejecuta los 11 experimentos (E1–E11) del simulador VLC industrial mejorado en
 una nave metalmecánica pesada con alta EMI (horno de inducción, prensa, CNCs
 con VFD, puesto de soldadura, polvo en suspensión, suciedad óptica y tráfico
 de operarios y grúas horquilla).
@@ -13,9 +13,12 @@ Métricas oficiales del proyecto (enunciado: "eficiencia y confiabilidad", máx.
   2. Eficiencia    : Goodput efectivo libre de errores [Mb/s] y Eficiencia
                      Energética Incremental de Comunicación [Mbit/J].
   * Variable física intermedia: SNR [dB] para diagnóstico espacial del enlace.
+    Desde la revisión técnica 2 es la SNR de apertura de ojo (peor caso de ISI),
+    con BER promediada sobre los bits vecinos (Params.isi_model = "eye").
+  * E11 (revisión técnica 2): sensibilidad de la eficiencia a las potencias supuestas.
 
 Uso:
-    python run_all.py          (≈ 1–2 min; resultados reproducibles con semilla 2023)
+    python run_all.py          (≈ 3 min; resultados reproducibles con semilla 2023)
 """
 from dataclasses import replace
 import csv
@@ -215,7 +218,7 @@ tau = rms_delay_spread(h0, d0, hist0[0.0], tb, beta_ext=0.0)
 fig, axs = plt.subplots(1, 3, figsize=(15.5, 4.4))
 for ax, data, lab, cm in (
     (axs[0], 10.0 * np.log10(np.maximum(r0["P_dc"], 1e-30) * 1e3), "Potencia óptica recibida [dBm]", "viridis"),
-    (axs[1], r0["snr_db"], "SNR intermedia [dB]", "viridis"),
+    (axs[1], r0["snr_db"], "SNR (apertura de ojo) [dB]", "viridis"),
     (axs[2], tau * 1e9, "Dispersión de retardo RMS [ns]", "magma"),
 ):
     im = ax.imshow(data.reshape(ny, nx), origin="lower", extent=[0, P0.L, 0, P0.W], cmap=cm)
@@ -234,7 +237,7 @@ plt.close(fig)
 
 csv_rows += [
     ["E2", "Potencia óptica recibida min/max [dBm]", f"{10*np.log10(r0['P_dc'].min()*1e3):.1f} / {10*np.log10(r0['P_dc'].max()*1e3):.1f}"],
-    ["E2", "SNR intermedia min/mediana/max a 10 Mb/s [dB]", f"{r0['snr_db'].min():.1f} / {np.median(r0['snr_db']):.1f} / {r0['snr_db'].max():.1f}"],
+    ["E2", "SNR (apertura de ojo) min/mediana/max a 10 Mb/s [dB]", f"{r0['snr_db'].min():.1f} / {np.median(r0['snr_db']):.1f} / {r0['snr_db'].max():.1f}"],
     ["E2", "Goodput medio caso referencia [Mb/s]", f"{r0['goodput_mbps'].mean():.2f}"],
     ["E2", "tau_RMS máximo [ns]", f"{np.nanmax(tau)*1e9:.1f}"],
 ]
@@ -280,15 +283,15 @@ for ax, (name, (p, h, d, hi, area)) in zip(axs.ravel(), scen.items()):
     gp_mean = float(np.mean(r["goodput_mbps"][area]))
     res_scen[name] = (r, cov, gp_mean, area)
 
-    im = ax.imshow(np.clip(snr, -10, 45).reshape(ny, nx), origin="lower", extent=[0, P0.L, 0, P0.W],
-                   cmap=cmap, vmin=-10, vmax=45)
+    im = ax.imshow(np.clip(snr, -10, 60).reshape(ny, nx), origin="lower", extent=[0, P0.L, 0, P0.W],
+                   cmap=cmap, vmin=-10, vmax=60)
     ax.contour(xs, ys, np.nan_to_num(snr, nan=99).reshape(ny, nx), levels=[SNR_TH_OOK_DB], colors="k", linewidths=1.1)
     draw_layout(ax, P0, dyn_map if with_obs else None, show_static=with_obs)
     ax.set_title(f"{name}\ncob. {cov:.1f} % · SNR med. {np.nanmedian(snr):.1f} dB · Gp {gp_mean:.2f} Mb/s", fontsize=8.8)
     csv_rows.append(["E3", f"{name} · Cobertura [%] / Goodput [Mb/s]", f"{cov:.1f} % / {gp_mean:.2f}"])
     csv_rows.append(["E3", f"{name} · SNR mediana [dB]", f"{np.nanmedian(snr):.1f}"])
 
-fig.colorbar(im, ax=axs, shrink=0.8, label="SNR intermedia [dB]  (línea negra = 13,5 dB → BER = 10⁻⁶)")
+fig.colorbar(im, ax=axs, shrink=0.8, label="SNR (apertura de ojo) [dB]  (línea negra = 13,5 dB → BER = 10⁻⁶)")
 fig.suptitle("E3 · Mapas de SNR a 10 Mb/s en seis escenarios · Cobertura = % área libre con BER ≤ 10⁻⁶\n"
              "(S4–S5: gris = máquinas, naranjo = operarios, rojo = grúas; reflexiones bloqueadas también por móviles)", y=0.99)
 fig.savefig(f"{OUT}/E3_mapas_snr_escenarios.png")
@@ -405,7 +408,7 @@ write_csv("E5_suciedad.csv", ["visibilidad_m", "dias", "cobertura_%", "SNR_media
 log("E5 listo")
 
 # ===========================================================================
-# E6  Temperatura ambiente y temperatura de unión Tj del LED (Davis et al. 2019)
+# E6  Temperatura ambiente y temperatura de unión Tj del LED (modelo térmico supuesto)
 # ===========================================================================
 Ts = np.arange(0, 91, 5)
 fig, axs = plt.subplots(1, 2, figsize=(12.6, 4.5))
@@ -887,8 +890,8 @@ axs[0].axvline(SNR_TH_OOK_DB, color="k", ls="--", lw=1.0)
 axs[0].axvline(SNR_TH_OOK_FEC_DB, color="tab:green", ls=":", lw=1.2)
 axs[0].text(SNR_TH_OOK_DB + 0.6, 48, "13,5 dB\n(sin FEC)", fontsize=7.5)
 axs[0].text(SNR_TH_OOK_FEC_DB - 9.0, 68, "10,0 dB\n(RS-FEC)", fontsize=7.5, color="darkgreen")
-axs[0].set_xlim(-10, 45)
-axs[0].set_xlabel("SNR intermedia [dB]")
+axs[0].set_xlim(-10, 65)
+axs[0].set_xlabel("SNR de apertura de ojo [dB]")
 axs[0].set_ylabel("CDF [%]")
 axs[0].set_title("E10a · CDF de SNR en escenario combinado hostil")
 axs[0].legend(fontsize=7.6, loc="upper left")
@@ -927,6 +930,44 @@ for k in e10_keys:
                      f"{e10_av[k]:.1f} % / {e10_gp[k]:.2f} / {e10_ee[k]:.2f}"])
 write_csv("E10_ablacion.csv", ["configuracion", "disponibilidad_99_%", "goodput_medio_Mbps", "eficiencia_Mbit_por_J"], rows_e10)
 log("E10 listo")
+
+# ===========================================================================
+# E11 Sensibilidad de la eficiencia energética a las potencias supuestas
+#     (revisión técnica 2: la métrica Mbit/J depende de P_comm, que es un supuesto)
+# ===========================================================================
+x_w = np.linspace(0.1, 3.0, 59)                     # W eléctricos extra por luminaria (driver VLC)
+p9 = p_9_60
+p16 = p_16_adr_fec
+rx9 = p9.P_rx_vlc * (1.6 if p9.adr_enabled else 1.0)
+rx16 = p16.P_rx_vlc * (1.6 if p16.adr_enabled else 1.0)
+ee9 = vlc9_clean_gp / (len(p9.led_xy) * x_w + rx9)
+ee16 = vlc16_clean_gp / (len(p16.led_xy) * x_w + rx16)
+fig, ax = plt.subplots(figsize=(8.6, 4.6))
+ax.plot(x_w, ee9, c="tab:blue", lw=2, label=f"VLC 9 lum. 1-PD ({vlc9_clean_gp:.2f} Mb/s)")
+ax.plot(x_w, ee16, c="tab:green", lw=2, label=f"VLC 16 lum. ADR+FEC ({vlc16_clean_gp:.2f} Mb/s)")
+rows_e11 = []
+for p_ap, ls in ((6.0, ":"), (12.0, "--"), (15.0, "-.")):
+    ee_w = wifi_sp_fec_gp / (p_ap + W_PLANT.P_rx_wifi_W)
+    ax.axhline(ee_w, color="tab:cyan", ls=ls, lw=1.4, label=f"Wi-Fi+FEC, AP {p_ap:.0f} W ({ee_w:.2f} Mbit/J)")
+    be9 = (vlc9_clean_gp / ee_w - rx9) / len(p9.led_xy)
+    be16 = (vlc16_clean_gp / ee_w - rx16) / len(p16.led_xy)
+    rows_e11.append([f"{p_ap:.0f}", f"{ee_w:.3f}", f"{be9:.2f}", f"{be16:.2f}"])
+    csv_rows.append(["E11", f"Punto de equilibrio con AP Wi-Fi de {p_ap:.0f} W · W extra por luminaria (9 lum. / 16 lum.)",
+                     f"{be9:.2f} / {be16:.2f}"])
+ax.set_ylim(0, 3.0)
+ax.axvline(P0.P_comm_extra_per_led, color="k", lw=0.8, ls=":")
+ax.text(P0.P_comm_extra_per_led + 0.03, 2.75, "supuesto del\nsimulador (1 W)", fontsize=7.5, va="top")
+ax.set_xlabel("Potencia eléctrica extra por luminaria para modular [W]")
+ax.set_ylabel("Eficiencia energética incremental [Mbit/J]")
+ax.set_title("E11 · ¿Desde qué consumo deja VLC de ser más eficiente que Wi-Fi?\n"
+             "VLC gana donde su curva queda sobre la línea del AP Wi-Fi")
+ax.legend(fontsize=7.5, loc="upper right")
+fig.savefig(f"{OUT}/E11_sensibilidad_eficiencia.png")
+plt.close(fig)
+write_csv("E11_sensibilidad_eficiencia.csv",
+          ["potencia_AP_wifi_W", "EE_wifi_Mbit_por_J", "equilibrio_W_por_luminaria_9lum", "equilibrio_W_por_luminaria_16lum"],
+          rows_e11)
+log("E11 listo")
 
 # ===========================================================================
 # Resumen final y registro de ejecución

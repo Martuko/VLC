@@ -37,8 +37,11 @@ Modelos físicos implementados y referencias verificadas
      (DOI: 10.3390/s22072483).
    - D. Schneider et al., Optics Express, 29(11), 2021. DOI: 10.1364/OE.421757
 4. Suciedad depositada en ópticas (LDD) y acoplamiento con temperatura de unión Tj:
-   - R. G. Davis, A. Wilkerson & B. R. Kinzey, LEUKOS, 15(1), 55–63, 2019.
-     DOI: 10.1080/15502724.2018.1517598
+   - Concepto de LDD: R. G. Davis, A. Wilkerson & B. R. Kinzey, LEUKOS, 15(1), 55–63,
+     2019. DOI: 10.1080/15502724.2018.1517598 (mediciones en luminarias de EXTERIOR;
+     midieron depreciaciones más lentas que las constantes usadas aquí).
+   - Las constantes tau_rx/tau_tx y el acoplamiento térmico k_soil_th son SUPUESTOS de
+     diseño para polvo industrial denso (revisión técnica 2); se barren en E5.
 5. Receptor con Diversidad Angular piramidal (ADR, combinación MRC/SBC):
    - A. Nuwanpriya, S.-W. Ho & C. S. Chen, IEEE JSAC, 33(9), 1780–1792, 2015.
      DOI: 10.1109/JSAC.2015.2432514
@@ -53,8 +56,11 @@ Modelos físicos implementados y referencias verificadas
    - 3GPP TR 38.901, sección 7.4.1 (Indoor Factory).
    - D. Middleton, IEEE Trans. EMC, EMC-19(3), 106–127, 1977.
      DOI: 10.1109/TEMC.1977.303527
-   - J.-D. C. Oyedum et al., IEEE GLOBECOM, 2025.
-     DOI: 10.1109/GLOBECOM59602.2025.11432514
+   - K. L. Blackard, T. S. Rappaport & C. W. Bostian, IEEE JSAC, 11(7), 991–1001,
+     1993 (ruido impulsivo medido en interiores a 918 MHz, 2,44 GHz y 4 GHz).
+     DOI: 10.1109/49.233212
+     (La referencia a Oyedum et al., GLOBECOM 2025, se eliminó en la revisión técnica 2:
+     no fue posible verificar su existencia.)
 
 Todas las magnitudes están en el Sistema Internacional (m, W, A, s, K, Hz)
 salvo cuando el nombre del parámetro indica explícitamente otra unidad.
@@ -203,10 +209,16 @@ class Params:
     # --- Enlace, codificación FEC (IEEE 802.15.7) y paquete ---
     Rb: float = 10e6             # tasa nominal industrial OOK-NRZ [bit/s] (equiparada a Wi-Fi)
     use_fec: bool = False        # activa Reed-Solomon RS(255,239)
+    # Modelo de ISI (revisión técnica 2):
+    #   "eye"   -> muestreo óptimo (mediana ponderada de llegadas) + BER por apertura de ojo
+    #              promediada sobre los bits vecinos (ISI determinista, no gaussiana).
+    #   "gauss" -> modelo original: sincronización a la primera llegada e ISI tratada como
+    #              ruido gaussiano (Komine 2004). Se conserva para comparación.
+    isi_model: str = "eye"
     packet_bits: int = 1000      # tamaño de trama industrial para PER / Goodput [bits]
 
     # --- Condiciones hostiles ---
-    # 1) Temperatura ambiente y temperatura de unión Tj (Davis et al. 2019)
+    # 1) Temperatura ambiente y temperatura de unión Tj (modelo térmico supuesto; ver E6)
     T_amb: float = 25.0          # temperatura ambiente en la nave [°C]
     delta_T_j_nom: float = 30.25 # salto térmico nominal unión-ambiente del LED (0,55 °C/W × 55 W) [°C]
     T_j_ref: float = 55.25       # temperatura de unión nominal a T_amb = 25 °C limpio [°C]
@@ -221,7 +233,7 @@ class Params:
     dust_g_hg: float = 0.70      # factor de asimetría de Henyey-Greenstein (forward scattering)
     enable_scattering: bool = True
 
-    # 3) Suciedad depositada sobre ópticas (LDD — Davis et al. 2019)
+    # 3) Suciedad depositada sobre ópticas (LDD; constantes supuestas para polvo denso, ver E5)
     days_dirty: float = 0.0      # días sin limpieza de luminarias y receptores
     tau_rx_days: float = 30.0    # constante de ensuciamiento del lente receptor (mira hacia arriba) [días]
     tau_tx_days: float = 120.0   # constante de ensuciamiento de la luminaria (mira hacia abajo) [días]
@@ -277,7 +289,7 @@ class Params:
         Temperatura de unión del LED [°C]:
             Tj = T_amb + delta_T_j_nom * [1 + k_soil_th * (1 - T_soil_tx)]
         Modela el autocalentamiento del LED y el efecto aislante del polvo
-        acumulado sobre el disipador térmico (Davis et al., 2019).
+        acumulado sobre el disipador térmico (supuesto de diseño, k_soil_th).
         """
         soil_penalty = 1.0 + self.k_soil_th * (1.0 - self.T_soil_tx)
         return float(self.T_amb + self.delta_T_j_nom * soil_penalty)
@@ -366,7 +378,8 @@ STATIC_OBSTACLES = {
 }
 
 # Fuentes industriales de EMI en banda ISM 2,4 GHz: (x, y, z, EMI_pico_1m_dB)
-# Basado en mediciones de ruido impulsivo de maquinaria (NIST / Oyedum 2025):
+# SUPUESTOS de diseño (no medidos en esta planta); el ruido impulsivo de motores y
+# equipos eléctricos en interiores está documentado por Blackard et al. (1993):
 #   - Horno de inducción y puesto de soldadura TIG/MIG: emisión impulsiva severa
 #   - Prensa y centros CNC con variadores VFD: emisión moderada-alta
 EMI_SOURCES = {
@@ -773,7 +786,7 @@ def noise_variance(p: Params, P_dc_rx, A_override: float = None):
     return s_shot, s_th
 
 
-def _branch_performance(
+def _branch_performance_gauss(
     p: Params,
     h_los: np.ndarray,
     d_los: np.ndarray,
@@ -894,6 +907,138 @@ def _branch_performance(
     )
 
 
+def _eye_terms(
+    p: Params,
+    h_los: np.ndarray,
+    d_los: np.ndarray,
+    refl_hist=None,
+    t_bins=None,
+    A_override: float = None,
+    fov_deg_override: float = None,
+):
+    """
+    Términos de amplitud del modelo de ISI por apertura de ojo (revisión técnica 2).
+
+    1. Todas las llegadas (LOS de cada luminaria, cola de scattering por polvo y
+       reflexiones) se describen como pares (tiempo, ganancia).
+    2. El instante de sincronización t0 es la MEDIANA PONDERADA de los tiempos de
+       llegada: minimiza la suma de |t - t0| ponderada por la ganancia, es decir,
+       la amplitud total de ISI de un receptor integrar-y-descargar.
+    3. Una llegada desplazada |dt| < Tb aporta (1 - |dt|/Tb) al bit actual y
+       |dt|/Tb al bit anterior (si llega tarde) o siguiente (si llega antes).
+    4. La cola del filtro paso bajo del LED se suma a la ISI del bit anterior.
+    Devuelve amplitudes de corriente [A] (señal, ISI tardía, ISI temprana), la
+    varianza de ruido [A^2] y magnitudes auxiliares.
+    """
+    beta = p.beta_ext
+    scale = p.P_opt * p.led_derating * p.T_soil * p.Ts_blue_eff
+    tau_o = beta * d_los
+    g_los = h_los * np.exp(-tau_o)
+    t_los = d_los / C_LUZ
+    Tb = 1.0 / p.Rb
+
+    if p.enable_scattering and beta > 0.0:
+        fov_rad = p.fov if fov_deg_override is None else np.radians(fov_deg_override)
+        phi_hg = hg_fov_fraction(fov_rad, p.dust_g_hg)
+        w0 = p.dust_albedo
+        g_scat = h_los * phi_hg * (-np.expm1(-w0 * tau_o)) * np.exp(-(1.0 - w0) * tau_o)
+        tau_s = (d_los / C_LUZ) * (1.0 + tau_o) * (1.0 - p.dust_g_hg) * 0.5
+    else:
+        g_scat = np.zeros_like(h_los)
+        tau_s = np.zeros_like(h_los)
+
+    # La cola exponencial de scattering se representa por su instante medio t_los + tau_s
+    times = [t_los, t_los + tau_s]
+    gains = [g_los, g_scat]
+    if refl_hist is not None:
+        times.append(np.broadcast_to(t_bins[None, :], refl_hist.shape))
+        gains.append(refl_hist)
+    T = np.concatenate(times, axis=1)
+    G = np.concatenate(gains, axis=1)
+    G_tot = G.sum(axis=1)
+
+    # Mediana ponderada por fila (instante de muestreo óptimo)
+    order = np.argsort(T, axis=1)
+    Ts = np.take_along_axis(T, order, axis=1)
+    Gs = np.take_along_axis(G, order, axis=1)
+    cw = np.cumsum(Gs, axis=1)
+    idx = np.argmax(cw >= 0.5 * cw[:, -1:], axis=1)
+    t0 = Ts[np.arange(len(T)), idx]
+
+    delta = T - t0[:, None]
+    w = np.minimum(np.abs(delta) / Tb, 1.0)
+    S_ch = np.sum(G * (1.0 - w), axis=1)
+    I_late = np.sum(np.where(delta > 0.0, G * w, 0.0), axis=1)
+    I_early = np.sum(np.where(delta < 0.0, G * w, 0.0), axis=1)
+
+    eta_led = led_bandwidth_efficiency(p.Rb, p.f_3db_effective)
+    S = eta_led * S_ch
+    I_late = I_late + (1.0 - eta_led) * S_ch
+
+    amp = p.resp * p.mod_index * scale
+    P_dc = scale * G_tot
+    s_shot, s_th = noise_variance(p, P_dc, A_override=A_override)
+    var = s_shot + s_th
+    return dict(A_s=amp * S, A_l=amp * I_late, A_e=amp * I_early, var=var, P_dc=P_dc,
+                s_shot=s_shot, s_th=s_th, G_los=g_los.sum(1), G_scat=g_scat.sum(1), G_tot=G_tot)
+
+
+def eye_ber(A_s, A_l, A_e, var):
+    """
+    BER de OOK con ISI determinista de dos bits vecinos (anterior y siguiente),
+    promediada sobre los 4 patrones equiprobables:
+        BER = 1/4 * sum Q((A_s ± A_l ± A_e) / sigma)
+    Si el ojo está cerrado (A_s <= A_l + A_e) la BER se acerca a 1/4 o más.
+    """
+    sig = np.sqrt(np.maximum(np.asarray(var, dtype=float), 1e-300))
+    A_s = np.asarray(A_s, dtype=float)
+    out = np.zeros_like(A_s)
+    for sl in (1.0, -1.0):
+        for se in (1.0, -1.0):
+            out += qfunc((A_s + sl * A_l + se * A_e) / sig)
+    return 0.25 * out
+
+
+def _pack_results(p: Params, ber_pre, snr_eye, snr_noise, extra: dict):
+    ber = rs_post_fec_ber(ber_pre) if p.use_fec else ber_pre
+    gp = goodput_mbps(p.Rb, ber, code_rate=p.code_rate, packet_bits=p.packet_bits)
+    out = dict(
+        snr=snr_eye,
+        snr_db=10.0 * np.log10(np.maximum(snr_eye, 1e-30)),
+        snr_noise_db=10.0 * np.log10(np.maximum(snr_noise, 1e-30)),
+        ber_pre=ber_pre,
+        ber=ber,
+        goodput_mbps=gp,
+        ee_mbit_per_j=gp / p.P_comm_total_W,
+    )
+    out.update(extra)
+    return out
+
+
+def _branch_performance(
+    p: Params,
+    h_los: np.ndarray,
+    d_los: np.ndarray,
+    refl_hist=None,
+    t_bins=None,
+    A_override: float = None,
+    fov_deg_override: float = None,
+):
+    """Despacha al modelo de ISI elegido en `p.isi_model` ("eye" por defecto)."""
+    if p.isi_model == "gauss":
+        return _branch_performance_gauss(p, h_los, d_los, refl_hist, t_bins, A_override, fov_deg_override)
+    e = _eye_terms(p, h_los, d_los, refl_hist, t_bins, A_override, fov_deg_override)
+    var = np.maximum(e["var"], 1e-300)
+    eye_open = np.maximum(e["A_s"] - e["A_l"] - e["A_e"], 0.0)
+    snr_eye = eye_open ** 2 / var                 # SNR de peor caso (apertura de ojo)
+    snr_noise = e["A_s"] ** 2 / var               # SNR sin ISI (solo ruido), diagnóstico
+    ber_pre = eye_ber(e["A_s"], e["A_l"], e["A_e"], var)
+    return _pack_results(p, ber_pre, snr_eye, snr_noise, dict(
+        P_dc=e["P_dc"], s_shot=e["s_shot"], s_th=e["s_th"],
+        I_isi_sq=(e["A_l"] + e["A_e"]) ** 2, A_s=e["A_s"], A_l=e["A_l"], A_e=e["A_e"], var=var,
+        G_los=e["G_los"], G_scat=e["G_scat"], G_tot=e["G_tot"]))
+
+
 def performance(p: Params, h_los, d_los, refl_hist=None, t_bins=None):
     """Calcula métricas VLC para receptor de un único fotodiodo vertical."""
     return _branch_performance(p, h_los, d_los, refl_hist=refl_hist, t_bins=t_bins)
@@ -914,6 +1059,32 @@ def performance_adr(p: Params, h_list, d_list, hist_list=None, t_bins=None):
             A_override=A_b, fov_deg_override=p.adr_fov_deg,
         )
         branch_res.append(res_b)
+
+    if p.isi_model != "gauss":
+        A_s = np.stack([r["A_s"] for r in branch_res], axis=0)
+        A_l = np.stack([r["A_l"] for r in branch_res], axis=0)
+        A_e = np.stack([r["A_e"] for r in branch_res], axis=0)
+        var = np.stack([r["var"] for r in branch_res], axis=0)
+        P_dc_tot = np.sum([r["P_dc"] for r in branch_res], axis=0)
+        if p.adr_combiner.upper() == "SBC":
+            bers = np.stack([r["ber_pre"] for r in branch_res], axis=0)
+            best = np.argmin(bers, axis=0)
+            cols = np.arange(bers.shape[1])
+            a_s, a_l, a_e, v = A_s[best, cols], A_l[best, cols], A_e[best, cols], var[best, cols]
+        else:
+            # MRC con pesos c_b = A_s,b / sigma_b^2 (ruido independiente por rama)
+            Ssum = np.sum(A_s ** 2 / var, axis=0)
+            norm = np.sqrt(np.maximum(Ssum, 1e-300))
+            a_s = norm
+            a_l = np.sum(A_s * A_l / var, axis=0) / norm
+            a_e = np.sum(A_s * A_e / var, axis=0) / norm
+            v = np.ones_like(a_s)
+        ber_pre = eye_ber(a_s, a_l, a_e, v)
+        snr_eye = np.maximum(a_s - a_l - a_e, 0.0) ** 2 / v
+        snr_noise = a_s ** 2 / v
+        return _pack_results(p, ber_pre, snr_eye, snr_noise, dict(
+            P_dc=P_dc_tot,
+            branch_snrs_db=np.stack([r["snr_db"] for r in branch_res], axis=0)))
 
     snrs = np.stack([r["snr"] for r in branch_res], axis=0)      # (5, Nrx)
     if p.adr_combiner.upper() == "SBC":

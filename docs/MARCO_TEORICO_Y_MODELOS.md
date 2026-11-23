@@ -19,8 +19,8 @@ El simulador modela una nave de manufactura pesada de **15 × 15 × 6 m** con si
 | **Operarios y grúas horquilla** | Dinámicos (Monte Carlo) | 1,8 / 2,3 | Bloqueos aleatorios transitorios en la zona de tránsito de AGVs ($z_{\text{rx}} = 1,0\text{ m}$). |
 
 ### 1.2 ¿Por qué VLC es más conveniente que Wi-Fi en este entorno?
-1. **Inmunidad total a la Interferencia Electromagnética (EMI):** En plantas con hornos de inducción, arcos de soldadura TIG/MIG y motores con VFD, las conmutaciones de alta potencia generan ruido impulsivo de banda ancha que se derrama sobre la banda ISM de 2,4 GHz (Middleton, 1977; Oyedum et al., 2025). Esto degrada drásticamente la tasa de error y disponibilidad de Wi-Fi, mientras que el enlace óptico VLC opera a longitudes de onda de 400–700 nm sin acoplamiento electromagnético alguno.
-2. **Doble uso de la infraestructura de iluminación (Eficiencia energética):** La norma europea **EN 12464-1** exige una iluminancia mínima de $\ge 300\text{ lx}$ y uniformidad $U_0 \ge 0,60$ en áreas de producción industrial. Al modular las luminarias LED *high-bay* ya necesarias para iluminar la planta, el consumo energético incremental dedicado exclusivamente a comunicaciones se reduce a la electrónica de modulación y al receptor óptico (~10–12 W totales para toda la nave), logrando mayor eficiencia energética de comunicación (`Mbit/J`) que un punto de acceso RF dedicado cuando el Wi-Fi sufre retransmisiones por EMI (Matheus et al., 2019; Jenila & Jeyachitra, 2021).
+1. **Inmunidad total a la Interferencia Electromagnética (EMI):** En plantas con hornos de inducción, arcos de soldadura TIG/MIG y motores con VFD, las conmutaciones de alta potencia generan ruido impulsivo de banda ancha que se derrama sobre la banda ISM de 2,4 GHz (Middleton, 1977; Blackard et al., 1993). Esto degrada drásticamente la tasa de error y disponibilidad de Wi-Fi, mientras que el enlace óptico VLC opera a longitudes de onda de 400–700 nm sin acoplamiento electromagnético alguno.
+2. **Doble uso de la infraestructura de iluminación (Eficiencia energética):** La norma europea **EN 12464-1** exige una iluminancia mínima de $\ge 300\text{ lx}$ y uniformidad $U_0 \ge 0,60$ en áreas de producción industrial. Al modular las luminarias LED *high-bay* ya necesarias para iluminar la planta, el consumo energético incremental dedicado exclusivamente a comunicaciones se reduce a la electrónica de modulación y al receptor óptico (~10–12 W totales para toda la nave), pudiendo lograr mayor eficiencia energética de comunicación (`Mbit/J`) que un punto de acceso RF dedicado siempre que el driver de modulación consuma poco (ver E11: con un AP de 12 W, menos de 1,56 W por luminaria en la grilla 3×3 y 0,80 W en la 4×4), y cuando el Wi-Fi sufre retransmisiones por EMI (Matheus et al., 2019; Jenila & Jeyachitra, 2021).
 3. **Confinamiento físico y seguridad de capa 1:** La luz visible no atraviesa muros opacos, confinando las señales de control y telemetría de AGVs dentro del recinto fabril sin fugas hacia el exterior ni congestión del espectro RF licenciado/no licenciado.
 4. **Arquitectura bidireccional libre de RF (`VLC Downlink + IR 850 nm Uplink`):** Para mantener inmunidad total a EMI en ambos sentidos, el enlace descendente VLC (`10 Mb/s` nominales para consignas de navegación, mapas y diagnóstico hacia AGVs) se complementa con un enlace de subida infrarrojo a `850 nm` (`2 Mb/s` para telemetría de retorno y ACKs), eliminando la dependencia de RF en zonas críticas.
 5. **Complementariedad honesta ante polvo extremo:** Cuando la concentración de polvo en suspensión reduce la visibilidad por debajo de ~7–10 m, la extinción y dispersión óptica degradan al VLC mientras RF permanece inalterado; por ello el simulador también cuantifica cuándo conviene un respaldo híbrido VLC + RF.
@@ -41,7 +41,9 @@ En estricto cumplimiento del enunciado del proyecto (*"evaluar la eficiencia y l
    - **Eficiencia Energética Incremental de Comunicación [Mbit/J]:**
      $$\eta_{\text{EE}} = \frac{G_{\text{eff}}}{P_{\text{comm,extra}}}$$
      donde $P_{\text{comm,extra}}$ contabiliza únicamente la potencia eléctrica adicional requerida para comunicar (drivers de modulación + receptor en VLC; AP industrial + radio RF en Wi-Fi).
-3. **Variable física intermedia:** La **SNR eléctrica [dB]** se calcula internamente como presupuesto de enlace y se representa en mapas espaciales de diagnóstico.
+3. **Variable física intermedia:** La **SNR de apertura de ojo [dB]** (peor caso de ISI, sección 3.4) se representa en mapas espaciales de diagnóstico.
+
+> **Nota sobre la eficiencia.** $P_{\text{comm,extra}}$ es un **supuesto** (1 W por luminaria y 0,5 W de receptor en VLC; 12 W de AP y 1,5 W de radio en Wi-Fi). Las conclusiones de eficiencia deben leerse como condicionales a esos valores; el experimento E11 entrega el punto de equilibrio.
 
 ---
 
@@ -71,14 +73,17 @@ A diferencia de un modelo de extinción pura (que produce la paradoja irreal de 
    $$g_{\text{scat}} = H_{\text{LOS}} \, \Phi_{\text{HG}}(\Psi_c) \, \left(1 - e^{-\omega_0 \tau_o}\right) e^{-(1 - \omega_0)\tau_o}$$
 4. **Ensanchamiento temporal:** Los fotones dispersados llegan tras $t_{\text{LOS}}$ con retardo exponencial de escala $\tau_s = \frac{d}{c}(1 + \tau_o)\frac{1 - g_{\text{HG}}}{2}$, incrementando tanto el ruido *shot* como la ISI.
 
-### 3.4 Solapamiento continuo de pulso OOK-NRZ y ancho de banda del LED blanco
-- **Canal multitrayecto:** Para cada llegada con retardo relativo $\Delta t = t - t_0$ respecto al instante de sincronización $t_0$ y duración de bit $T_b = 1/R_b$, la fracción útil integrada en el símbolo actual es $w_{\text{sig}}(\Delta t) = \max(0, 1 - \Delta t / T_b)$ y la fracción derramada como ISI es $w_{\text{isi}}(\Delta t) = 1 - w_{\text{sig}}(\Delta t)$. Para la cola exponencial de *scattering* se usa su integral exacta cerrada sobre $[0, \max(0, T_b - \Delta t_{\text{LOS}})]$.
-- **Ancho de banda del LED blanco (Le Minh et al., 2009):** Modelado como filtro paso bajo RC de 1.er orden ($\tau_{\text{LED}} = 1 / (2\pi f_{3\text{dB}})$). La fracción de apertura útil del ojo OOK-NRZ es:
-  $$\eta_{\text{LED}} = 1 - e^{-T_b / \tau_{\text{LED}}}, \qquad \xi_{\text{LED}} = e^{-T_b / \tau_{\text{LED}}}$$
-  donde $f_{3\text{dB}} = 3\text{ MHz}$ corresponde a un LED fosforescente crudo, $15\text{ MHz}$ a pre-ecualización analógica básica (diseño base a 10 Mb/s) y $25\text{ MHz}$ al incorporar filtro óptico azul (suprimiendo el fósforo lento con transmitancia de señal $T_{s,\text{azul}} = 0,55$ y rechazo del 75 % de la radiación roja/IR ambiental, $T_{s,\text{bg}} = 0,25$).
+### 3.4 ISI por apertura de ojo con muestreo óptimo y ancho de banda del LED (revisión técnica 2)
+Cada llegada $k$ (LOS de cada luminaria, cola de *scattering* representada por su instante medio $t_{\text{LOS}} + \tau_s$, y cada intervalo del histograma de reflexiones) tiene un tiempo $t_k$ y una ganancia $g_k$.
+
+- **Instante de muestreo óptimo.** Un receptor integrar-y-descargar con ventana $[t_0, t_0 + T_b]$ recibe de una llegada desplazada $\Delta t_k = t_k - t_0$ la fracción $1 - |\Delta t_k|/T_b$ del bit actual y $|\Delta t_k|/T_b$ del bit vecino (anterior si $\Delta t_k > 0$, siguiente si $\Delta t_k < 0$). La amplitud total de ISI $\sum_k g_k |\Delta t_k|$ es mínima cuando $t_0$ es la **mediana ponderada** de los $t_k$.
+- **Ancho de banda del LED blanco (Le Minh et al., 2009):** filtro paso bajo de 1.er orden con $\tau_{\text{LED}} = 1/(2\pi f_{3\text{dB}})$; la fracción útil es $\eta_{\text{LED}} = 1 - e^{-T_b/\tau_{\text{LED}}}$ y la cola $(1 - \eta_{\text{LED}})$ se suma a la ISI del bit anterior. $f_{3\text{dB}} = 3\text{ MHz}$ (LED fosforescente sin ecualizar), $15\text{ MHz}$ (pre-ecualización, diseño base) y $25\text{ MHz}$ (filtro azul, $T_{s,\text{azul}} = 0,55$ y $T_{s,\text{bg}} = 0,25$; valores supuestos).
+- **BER con ISI determinista.** Con amplitudes de corriente $A_s$ (señal), $A_\ell$ (ISI tardía) y $A_e$ (ISI temprana) y ruido $\sigma^2 = \sigma^2_{\text{shot}} + \sigma^2_{\text{term}}$:
+  $$\text{BER} = \frac{1}{4}\sum_{\pm,\pm} Q\!\left(\frac{A_s \pm A_\ell \pm A_e}{\sigma}\right), \qquad \text{SNR}_{\text{ojo}} = \frac{(A_s - A_\ell - A_e)^2}{\sigma^2}$$
+- **Por qué cambió.** La versión anterior sincronizaba con la primera llegada y sumaba $I_{\text{ISI}}^2$ al ruido gaussiano (Komine & Nakagawa, 2004). Con 9 luminarias a distancias distintas la ISI resultaba ~1700 veces mayor que el ruido, la SNR quedaba fija (~26 dB) frente a temperatura y luz ambiente, y bloquear luminarias lejanas *mejoraba* la SNR. Ese modelo se conserva como `isi_model="gauss"` para comparación.
 
 ### 3.5 Suciedad depositada (LDD), temperatura de unión ($T_j$) y acoplamiento de $I_{\text{bg}}$
-Siguiendo el fenómeno de *Luminaire Dirt Depreciation* (LDD) y retroalimentación térmica en disipadores reportado por Davis et al. (2019):
+El fenómeno de *Luminaire Dirt Depreciation* (LDD) está documentado por Davis et al. (2019) en luminarias de exterior, que midieron depreciaciones más lentas que las usadas aquí. Las constantes siguientes y el acoplamiento térmico son **supuestos** para polvo industrial denso, evaluados con barridos en E5 y E6:
 - **Transmitancia óptica:** $T_{\text{soil,rx}}(t) = e^{-t/\tau_{\text{rx}}}$ ($\tau_{\text{rx}} = 30\text{ d}$, lente orientado hacia arriba) y $T_{\text{soil,tx}}(t) = e^{-t/\tau_{\text{tx}}}$ ($\tau_{\text{tx}} = 120\text{ d}$, luminaria orientada hacia abajo).
 - **Temperatura de unión del LED:**
   $$T_j = T_{\text{amb}} + \Delta T_{j,\text{nom}} \Big[1 + k_{\text{soil,th}}(1 - T_{\text{soil,tx}})\Big]$$
@@ -91,11 +96,11 @@ Siguiendo el fenómeno de *Luminaire Dirt Depreciation* (LDD) y retroalimentaci�
 - **Codificación FEC Reed-Solomon RS(255,239)** (IEEE Std 802.15.7-2018, $m=8\text{ bits/símbolo}$, $t=8\text{ símbolos}$, $R_c = 239/255$):
   $$\text{BER}_{\text{post}} = p_b \cdot I_{p_s}(t,\; n - t), \qquad p_s = 1 - (1 - p_b)^8$$
   donde $I_x(a, b)$ es la función beta incompleta regularizada.
-- **Receptor con Diversidad Angular piramidal (ADR)** (Nuwanpriya et al., 2015): 5 fotodiodos (1 cenital + 4 inclinados a $35^\circ$ en azimutes $0^\circ, 90^\circ, 180^\circ, 270^\circ$) con FOV estrecho de $45^\circ$ y área por rama $A_{\text{pd}}/5$ (conservando el área total de silicio de $1\text{ cm}^2$), combinados mediante *Maximal Ratio Combining* ($\text{SNR}_{\text{MRC}} = \sum_{b=1}^{5} \text{SNR}_b$).
+- **Receptor con Diversidad Angular piramidal (ADR)** (Nuwanpriya et al., 2015): 5 fotodiodos (1 cenital + 4 inclinados a $35^\circ$ en azimutes $0^\circ, 90^\circ, 180^\circ, 270^\circ$) con FOV estrecho de $45^\circ$ y área por rama $A_{\text{pd}}/5$ (conservando el área total de silicio de $1\text{ cm}^2$), combinados mediante *Maximal Ratio Combining* con pesos $c_b = A_{s,b}/\sigma_b^2$; con el modelo de ojo la señal y la ISI combinadas son $\sum_b A_{s,b}^2/\sigma_b^2$ y $\sum_b A_{s,b}A_{\ell,b}/\sigma_b^2$ (y análogo para $A_e$), normalizadas por $\sqrt{\sum_b A_{s,b}^2/\sigma_b^2}$.
 
 ### 3.7 Referencia RF: Wi-Fi 2,4 GHz (3GPP TR 38.901 InF-SH) + EMI Middleton Class A
 - **Pérdidas de propagación:** 3GPP TR 38.901 sec. 7.4.1 (*Indoor Factory – Sparse clutter, High BS*), determinando LOS/NLOS únicamente por maquinaria metálica pesada ($z \ge 2\text{ m}$) y modelando operarios interceptando el rayo con pérdida corporal de $4\text{ dB}$ (eliminando el doble conteo de obstrucciones).
-- **Ruido impulsivo industrial Middleton Class A** (Middleton, 1977; Oyedum et al., 2025):
+- **Ruido impulsivo industrial Middleton Class A** (Middleton, 1977; Blackard et al., 1993):
   $$\text{BER}_{\text{ClassA}}(\gamma_0; A, \Gamma) = \sum_{m=0}^{M} e^{-A}\frac{A^m}{m!} \, Q\!\left(\sqrt{\frac{2\gamma_0}{1 + m/(A\Gamma)}}\right)$$
   donde $\gamma_0 = (E_b / N_{0,\text{th}})$ a la misma tasa objetivo $R_b = 10\text{ Mb/s}$ ($BW = 20\text{ MHz}$), $A = 0,1$ es el índice de impulsividad industrial y $\Gamma = 10^{-\text{EMI}_{\text{dB}}/10}$.
 - **Mapa espacial de EMI:** Superposición en potencia de un piso de planta (`14 dB`) más la emisión local de horno de inducción, soldadura, prensa y CNCs con decaimiento $d^{-2}$.
@@ -110,12 +115,13 @@ Siguiendo el fenómeno de *Luminaire Dirt Depreciation* (LDD) y retroalimentaci�
 | Reflectividad de paredes en celda industrial ($\rho$) | $0,4$ | Uysal, Miramirkhani et al., *IEEE Commun. Mag.*, 2017 (`10.1109/MCOM.2017.1600872CM`) |
 | BW de LED blanco crudo / pre-ecualizado / con filtro azul | $3\text{ MHz}$ / $15\text{ MHz}$ / $25\text{ MHz}$ ($T_{s,\text{azul}} = 0,55$) | Le Minh et al., *IEEE Photon. Technol. Lett.*, 2009 (`10.1109/LPT.2009.2022413`) |
 | Polvo (extinción Beer-Lambert + *scattering* HG $\omega_0, g_{\text{HG}}$) | $\omega_0 = 0,65$, $g_{\text{HG}} = 0,70$ | Al-Kinani et al., *IEEE COMST*, 2018 (`10.1109/COMST.2018.2838096`); Palacios Játiva et al., *IEEE Access* 2020 (`10.1109/ACCESS.2020.3030615`) & *MDPI Sensors* 2022 (`10.3390/s22072483`); Schneider et al., *Optics Express* 2021 (`10.1364/OE.421757`) |
-| Depreciación por suciedad (LDD) y acople térmico $T_j$ | $\tau_{\text{rx}}=30\text{ d}$, $\tau_{\text{tx}}=120\text{ d}$, $k_{\text{soil,th}}=0,25$ | Davis, Wilkerson & Kinzey, *LEUKOS*, 2019 (`10.1080/15502724.2018.1517598`) |
+| Depreciación por suciedad (LDD) y acople térmico $T_j$ | $\tau_{\text{rx}}=30\text{ d}$, $\tau_{\text{tx}}=120\text{ d}$, $k_{\text{soil,th}}=0,25$ (**supuestos**) | Concepto de LDD: Davis, Wilkerson & Kinzey, *LEUKOS*, 2019 (`10.1080/15502724.2018.1517598`), mediciones en exterior |
 | Receptor ADR piramidal (5 ramas, inclinación y combinación MRC) | $\theta_{\text{tilt}}=35^\circ$, $\text{FOV}=45^\circ$ | Nuwanpriya, Ho & Chen, *IEEE JSAC*, 2015 (`10.1109/JSAC.2015.2432514`) |
 | FEC Reed-Solomon RS(255,239) en VLC | $n=255, k=239, t=8$ | IEEE Std 802.15.7-2018 (`10.1109/IEEESTD.2019.8697198`) |
 | Eficiencia energética verde y arquitectura VLC + Uplink IR | Uplink IR $850\text{ nm}$ ($200\text{ mW}$, $2\text{ Mb/s}$), Mbit/J | Jenila & Jeyachitra, *Digital Commun. & Networks* (ScienceDirect), 2021 (`10.1016/j.dcan.2020.09.004`); Matheus et al., *IEEE COMST*, 2019 (`10.1109/COMST.2019.2913348`) |
 | Propagación RF fábrica (InF-SH) | $\sigma_{\text{LOS}}=4,3\text{ dB}$, $\sigma_{\text{NLOS}}=5,9\text{ dB}$ | 3GPP TR 38.901, sec. 7.4.1 |
-| EMI impulsiva industrial en 2,4 GHz (Middleton Class A) | $A=0,1$, fuentes horno/soldadura/VFD | Middleton, *IEEE Trans. EMC*, 1977 (`10.1109/TEMC.1977.303527`); Oyedum et al., *IEEE GLOBECOM*, 2025 (`10.1109/GLOBECOM59602.2025.11432514`) |
+| EMI impulsiva industrial en 2,4 GHz (Middleton Class A) | $A=0,1$; picos de horno/soldadura/VFD (**supuestos**) | Middleton, *IEEE Trans. EMC*, 1977 (`10.1109/TEMC.1977.303527`); Blackard, Rappaport & Bostian, *IEEE JSAC*, 1993 (`10.1109/49.233212`) |
+| ISI por apertura de ojo y muestreo óptimo | mediana ponderada de llegadas; BER promediada sobre 4 patrones | Revisión técnica 2 (ver `docs/REVISION_TECNICA.md`) |
 | Iluminación de áreas de trabajo industrial | $E_{\text{med}} \ge 300\text{ lx}$, $U_0 \ge 0,60$ | Norma EN 12464-1 |
 
 ---
@@ -125,4 +131,7 @@ Siguiendo el fenómeno de *Luminaire Dirt Depreciation* (LDD) y retroalimentaci�
 - Las reflexiones se modelan hasta primer orden sobre las cuatro paredes (en naves con superficies metálicas especulares pueden existir reflexiones de segundo orden adicionales en maquinaria).
 - La dispersión por polvo se aproxima mediante un modelo semi-analítico de dispersión hacia adelante (*forward scattering* con función de fase de Henyey-Greenstein y cola exponencial) en lugar de trazado Monte Carlo fotón a fotón en 3D (como el usado en túneles mineros en Palacios Játiva et al., 2022), preservando tiempos de ejecución interactivos de pocos minutos.
 - El traspaso (*handover*) vertical en la arquitectura híbrida se modela como selección ideal sin latencia de conmutación de capa MAC.
+- En el modelo de ojo la ISI se agrupa en un bit anterior y uno siguiente (peor caso coherente); a tasas donde los retardos superan $T_b$ es una aproximación conservadora.
+- No se modela el ruido de parpadeo (*flicker*) de luminarias ajenas que Schneider et al. (2021) miden en plantas reales; solo el ruido *shot* de la luz ambiente.
+- En el simulador web (`docs/index.html`) los obstáculos móviles bloquean la línea de vista pero no las reflexiones.
 - En el modo ADR se asume área total constante de silicio ($1\text{ cm}^2$ repartido en 5 ramas) y estimación ideal de relación señal a ruido por rama para MRC.

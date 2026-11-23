@@ -1,7 +1,7 @@
 ﻿configuracion,disponibilidad_99_%,goodput_medio_Mbps,eficiencia_Mbit_por_J
-1. Base VLC,60.0,9.40,0.990
-2. +Filtro +7 días,62.2,9.55,1.006
-3. +RS FEC,71.7,9.10,0.957
-4. +ADR+4×4 Autónomo,78.9,9.30,0.949
+1. Base VLC,62.8,9.57,1.007
+2. +Filtro +7 días,69.4,9.70,1.021
+3. +RS FEC,79.4,9.21,0.970
+4. +ADR+4×4 Autónomo,78.9,9.31,0.950
 5. Wi-Fi +FEC,70.6,9.31,0.689
 6. Híbrido VLC+Wi-Fi,99.4,9.37,0.402

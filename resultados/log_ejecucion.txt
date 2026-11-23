@@ -1,54 +1,58 @@
 [   0.0 s] Grilla de mapas: 3600 puntos (2894 área libre, 2666 zona tránsito AGV)
-[  10.3 s] E1 listo
-[  12.0 s] Canal sin obstáculos listo
-[  26.0 s] Canal con obstáculos fijos + móviles (LOS y reflexiones) listo
-[  26.7 s] E2 listo
-[  28.1 s] E3 listo
-[  31.2 s] Grilla de barridos lista (716 pts libres, 644 pts tránsito AGV)
-[  31.9 s] E4 listo
-[  33.0 s] E5 listo
-[  34.7 s] E6 listo
-[  35.7 s] E7 listo
-[  44.7 s] E8: 0 operarios listo
-[  51.1 s] E8: 5 operarios listo
-[  58.9 s] E8: 10 operarios listo
-[  69.3 s] E8: 20 operarios listo
-[  82.3 s] E8: 30 operarios listo
-[  97.9 s] E8: 40 operarios listo
-[  98.1 s] E8 listo
-[ 122.9 s] E9 listo
-[ 130.4 s] E10 listo
+[  11.0 s] E1 listo
+[  12.2 s] Canal sin obstáculos listo
+[  26.9 s] Canal con obstáculos fijos + móviles (LOS y reflexiones) listo
+[  27.6 s] E2 listo
+[  29.2 s] E3 listo
+[  31.3 s] Grilla de barridos lista (716 pts libres, 644 pts tránsito AGV)
+[  32.1 s] E4 listo
+[  34.0 s] E5 listo
+[  36.2 s] E6 listo
+[  37.4 s] E7 listo
+[  50.9 s] E8: 0 operarios listo
+[  62.0 s] E8: 5 operarios listo
+[  74.5 s] E8: 10 operarios listo
+[  89.7 s] E8: 20 operarios listo
+[ 108.1 s] E8: 30 operarios listo
+[ 128.7 s] E8: 40 operarios listo
+[ 128.9 s] E8 listo
+[ 175.7 s] E9 listo
+[ 186.5 s] E10 listo
+[ 186.6 s] E11 listo
 E1 | Grilla base 3×3 · Iluminancia media nave vacía (c/refl.) [lx] | 349
 E1 | Grilla base 3×3 · Uniformidad U0 nave vacía (EN ≥ 0,60) | 0.46
 E1 | Grilla optimizada 4×4 · Iluminancia media nave vacía [lx] | 302
 E1 | Grilla optimizada 4×4 · Uniformidad U0 nave vacía (EN ≥ 0,60) | 0.61
 E1 | Uniformidad en zona de tránsito AGV con máquinas (base / 4×4) | 0.08 / 0.05
 E2 | Potencia óptica recibida min/max [dBm] | -8.5 / -3.6
-E2 | SNR intermedia min/mediana/max a 10 Mb/s [dB] | 17.4 / 28.7 / 34.5
+E2 | SNR (apertura de ojo) min/mediana/max a 10 Mb/s [dB] | 49.5 / 56.2 / 58.3
 E2 | Goodput medio caso referencia [Mb/s] | 10.00
 E2 | tau_RMS máximo [ns] | 7.3
 E3 | S0 · Ideal (25 °C, limpio) · Cobertura [%] / Goodput [Mb/s] | 100.0 % / 10.00
-E3 | S0 · Ideal (25 °C, limpio) · SNR mediana [dB] | 28.7
+E3 | S0 · Ideal (25 °C, limpio) · SNR mediana [dB] | 56.2
 E3 | S1 · Polvo V=20 m (c/scatt.) + 30 d · Cobertura [%] / Goodput [Mb/s] | 100.0 % / 10.00
-E3 | S1 · Polvo V=20 m (c/scatt.) + 30 d · SNR mediana [dB] | 24.2
+E3 | S1 · Polvo V=20 m (c/scatt.) + 30 d · SNR mediana [dB] | 44.9
 E3 | S2 · Calor T_amb=70 °C (Tj=100 °C) · Cobertura [%] / Goodput [Mb/s] | 100.0 % / 10.00
-E3 | S2 · Calor T_amb=70 °C (Tj=100 °C) · SNR mediana [dB] | 28.6
+E3 | S2 · Calor T_amb=70 °C (Tj=100 °C) · SNR mediana [dB] | 52.5
 E3 | S3 · Luz ambiente intensa (5100 µA) · Cobertura [%] / Goodput [Mb/s] | 100.0 % / 10.00
-E3 | S3 · Luz ambiente intensa (5100 µA) · SNR mediana [dB] | 28.6
-E3 | S4 · Obstáculos (máq. + 12 op. + 3 grúas) · Cobertura [%] / Goodput [Mb/s] | 92.6 % / 9.46
-E3 | S4 · Obstáculos (máq. + 12 op. + 3 grúas) · SNR mediana [dB] | 30.8
-E3 | S5 · Combinado (todos los factores) · Cobertura [%] / Goodput [Mb/s] | 87.0 % / 8.85
-E3 | S5 · Combinado (todos los factores) · SNR mediana [dB] | 24.1
-E6 | ΔSNR mediana a T_amb=70 °C (Tj=102 °C, régimen ruido hostil) [dB] | -0.33
-E6 | ΔSNR mediana a T_amb=85 °C (Tj=117 °C, régimen ruido hostil) [dB] | -1.01
+E3 | S3 · Luz ambiente intensa (5100 µA) · SNR mediana [dB] | 50.2
+E3 | S4 · Obstáculos (máq. + 12 op. + 3 grúas) · Cobertura [%] / Goodput [Mb/s] | 95.8 % / 9.67
+E3 | S4 · Obstáculos (máq. + 12 op. + 3 grúas) · SNR mediana [dB] | 53.5
+E3 | S5 · Combinado (todos los factores) · Cobertura [%] / Goodput [Mb/s] | 89.7 % / 9.11
+E3 | S5 · Combinado (todos los factores) · SNR mediana [dB] | 31.2
+E6 | ΔSNR mediana a T_amb=70 °C (Tj=102 °C, régimen ruido hostil) [dB] | -4.26
+E6 | ΔSNR mediana a T_amb=85 °C (Tj=117 °C, régimen ruido hostil) [dB] | -8.03
 E9 | Wi-Fi (EMI espacial planta, sin FEC / +FEC) · ubicaciones ≥ 99 % [%] | 58.3 / 76.1
-E9 | VLC (base 9 lum. / 16 lum. ADR+FEC) · ubicaciones ≥ 99 % [%] | 84.4 / 100.0
+E9 | VLC (base 9 lum. / 16 lum. ADR+FEC) · ubicaciones ≥ 99 % [%] | 99.4 / 100.0
 E9 | Eficiencia energética incremental VLC ADR+4×4 vs Wi-Fi+FEC [Mbit/J] | 0.96 vs 0.69
 E9 | Uplink IR 850 nm (4×4, V=20 m, 7 d, 70 °C) · Cobertura [%] / Goodput [Mb/s] | 98.9 % / 1.86
-E10 | 1. Base VLC · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J] | 60.0 % / 9.40 / 0.99
-E10 | 2. +Filtro +7 días · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J] | 62.2 % / 9.55 / 1.01
-E10 | 3. +RS FEC · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J] | 71.7 % / 9.10 / 0.96
-E10 | 4. +ADR+4×4 Autónomo · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J] | 78.9 % / 9.30 / 0.95
+E10 | 1. Base VLC · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J] | 62.8 % / 9.57 / 1.01
+E10 | 2. +Filtro +7 días · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J] | 69.4 % / 9.70 / 1.02
+E10 | 3. +RS FEC · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J] | 79.4 % / 9.21 / 0.97
+E10 | 4. +ADR+4×4 Autónomo · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J] | 78.9 % / 9.31 / 0.95
 E10 | 5. Wi-Fi +FEC · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J] | 70.6 % / 9.31 / 0.69
 E10 | 6. Híbrido VLC+Wi-Fi · Dispo ≥99 % [%] / Goodput [Mb/s] / EE [Mbit/J] | 99.4 % / 9.37 / 0.40
-[ 130.4 s] Terminado
+E11 | Punto de equilibrio con AP Wi-Fi de 6 W · W extra por luminaria (9 lum. / 16 lum.) | 0.84 / 0.42
+E11 | Punto de equilibrio con AP Wi-Fi de 12 W · W extra por luminaria (9 lum. / 16 lum.) | 1.56 / 0.80
+E11 | Punto de equilibrio con AP Wi-Fi de 15 W · W extra por luminaria (9 lum. / 16 lum.) | 1.91 / 0.99
+[ 186.7 s] Terminado

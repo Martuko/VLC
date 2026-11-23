@@ -239,3 +239,55 @@ def test_hg_phase_integral_limits():
     assert np.isclose(hg_fov_fraction(0.0, 0.7), 0.0, atol=1e-12)
     assert np.isclose(hg_fov_fraction(np.pi, 0.7), 1.0, atol=1e-12)
     assert 0.0 < hg_fov_fraction(np.radians(60.0), 0.7) < 1.0
+
+
+# ---------------------------------------------------------------------------
+# Revisión técnica 2: modelo de ISI por apertura de ojo
+# ---------------------------------------------------------------------------
+from vlc_core import eye_ber, random_dynamic_boxes  # noqa: E402
+
+
+def test_eye_ber_limits():
+    """Sin ISI la BER es Q(A/sigma); con el ojo cerrado la BER no baja de ~1/4."""
+    a, var = np.array([5.0]), np.array([1.0])
+    assert np.isclose(eye_ber(a, 0.0, 0.0, var)[0], qfunc(5.0)[()], rtol=1e-12)
+    assert eye_ber(np.array([1.0]), 0.6, 0.6, np.array([1e-12]))[0] >= 0.25
+
+
+def test_obstacles_never_improve_snr():
+    """
+    Regresión de la paradoja de obstáculos del modelo gaussiano: bloquear trayectos
+    no debe mejorar la SNR (salvo diferencias numéricas < 0,5 dB en <1 % de puntos).
+    """
+    p = Params()
+    sb = static_boxes()
+    rx, _, _ = receiver_grid(p, 1.0)
+    dyn = random_dynamic_boxes(np.random.default_rng(5), 12, 3, p)
+    boxes = np.vstack([sb, dyn])
+    free = ~inside_any(rx[:, :2], boxes)
+    h0, d0 = los_channel(p, rx)
+    hist0, tb = reflection_histogram(p, rx, None, (0.0,))
+    hB, dB = los_channel(p, rx, boxes)
+    histB, _ = reflection_histogram(p, rx, boxes, (0.0,))
+    r0 = performance(p, h0, d0, hist0[0.0], tb)
+    rB = performance(p, hB, dB, histB[0.0], tb)
+    better = (rB["snr_db"] > r0["snr_db"] + 0.5) & free
+    assert better.sum() <= 0.01 * free.sum()
+
+
+def test_snr_responds_to_noise_sources():
+    """
+    Regresión del régimen dominado por ISI: el calor y la luz ambiente deben
+    reducir la SNR mediana (antes quedaba idéntica, 26,1 dB, en los tres casos).
+    """
+    p0 = Params()
+    rx, _, _ = receiver_grid(p0, 1.0)
+    h, d = los_channel(p0, rx)
+    hist, tb = reflection_histogram(p0, rx, None, (0.0,))
+    med = lambda p: float(np.median(performance(p, h, d, hist[0.0], tb)["snr_db"]))
+    base = med(p0)
+    assert med(replace(p0, T_amb=70.0)) < base - 1.0
+    assert med(replace(p0, I_bg=5100e-6)) < base - 1.0
+    # El modelo original se conserva y reproduce el régimen saturado por ISI
+    g = replace(p0, isi_model="gauss")
+    assert abs(med(replace(g, T_amb=70.0)) - med(g)) < 0.5

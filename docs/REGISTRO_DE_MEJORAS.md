@@ -47,3 +47,20 @@ Este documento explica **cada falencia detectada en la versión inicial del simu
 ### 4. [tests/test_vlc_core.py](../tests/test_vlc_core.py) y limpieza
 - Añadida suite de **13 pruebas unitarias físicas** verificando fórmulas cerradas, cumplimiento EN 12464-1, ausencia de paradoja de polvo, compromiso BW/potencia del filtro azul, acoplamiento de $I_{\text{bg}}$, modelo $T_j$, bloqueo bajo grúa, protección contra `ZeroDivisionError` en `rms_delay_spread`, ganancia RS-FEC, recuperación por ADR, Middleton Class A + `K_los_dB` y uplink IR.
 - Añadido `.gitignore` y eliminado el archivo obsoleto `Instructivo_Proyecto_VLC.pdf`.
+
+
+---
+
+## Revisión técnica 2 (noviembre 2026)
+
+Detalle completo, evidencia y tablas antes/después en [REVISION_TECNICA.md](REVISION_TECNICA.md).
+
+| Área | Versión mejorada | Revisión 2 | Impacto |
+| --- | --- | --- | --- |
+| **Modelo de ISI** | Sincronización a la primera llegada e ISI sumada como ruido gaussiano: la ISI era ~1700 veces el ruido, la SNR quedaba fija (~26 dB) ante calor y luz ambiente, y los obstáculos *mejoraban* la SNR en el 65 % de los puntos. | Muestreo en la mediana ponderada de llegadas y BER por apertura de ojo promediada sobre los bits vecinos (`isi_model="eye"`; el modelo anterior queda como `"gauss"`). | Calor (−4,3 dB a 70 °C) y luz solar (−6,0 dB) vuelven a afectar; paradoja de obstáculos eliminada; VLC base pasa de 84,4 % a 99,4 % en E9. |
+| **Referencias** | Oyedum et al. (GLOBECOM 2025) citado para la EMI; Davis et al. (2019) citado para el modelo de temperatura de unión. | Oyedum eliminado (no verificable) y reemplazado por Blackard et al. (IEEE JSAC 1993); Davis citado solo por el concepto de LDD; constantes de suciedad, acople térmico y picos de EMI declarados como supuestos. | Bibliografía defendible ante el profesor. |
+| **Eficiencia** | Ventaja de VLC (0,96 frente a 0,69 Mbit/J) presentada como resultado. | Nuevo **E11**: punto de equilibrio del consumo por luminaria frente a APs de 6, 12 y 15 W. | La ventaja queda expresada como condición (p. ej., < 0,80 W por luminaria en la grilla 4×4 frente a un AP de 12 W). |
+| **Conclusiones** | ADR + 4×4 como mejor diseño autónomo; polvo crítico bajo V = 7–10 m. | Un fotodiodo con FOV 80° iguala al ADR en E8; en E10 el ADR+4×4 (78,9 %) no supera al fotodiodo con FEC (79,4 %); a 10 Mb/s el polvo no corta el enlace ni con V = 5 m. | El riesgo dominante es el bloqueo y la suciedad acumulada. |
+| **Tests** | 13 | 16 (`test_eye_ber_limits`, `test_obstacles_never_improve_snr`, `test_snr_responds_to_noise_sources`). | Evita que reaparezca la saturación por ISI. |
+| **Simulador 3D web** | No existía. | `docs/index.html` (Three.js), con física portada a `web/vlc_physics.js` y validada contra Python (diferencias < 0,05 dB). Publicable con GitHub Pages desde `/docs`. | Demostración en vivo en la presentación y en cualquier navegador. |
+| **Figuras** | Rango de color de SNR hasta 45 dB. | Rangos ampliados a 60–65 dB y etiqueta "SNR (apertura de ojo)". | Mapas legibles con el nuevo modelo. |

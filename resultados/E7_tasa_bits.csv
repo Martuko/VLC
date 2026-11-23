@@ -1,51 +1,51 @@
 ﻿escenario,Rb_Mbps,cobertura_%,SNR_mediana_dB,goodput_medio_Mbps
-LED crudo 3 MHz (Ideal),1.0,100.0,48.92,1.00
-LED crudo 3 MHz (Ideal),2.0,100.0,42.84,2.00
-LED crudo 3 MHz (Ideal),5.0,100.0,27.55,5.00
-LED crudo 3 MHz (Ideal),10.0,8.9,13.07,9.96
-LED crudo 3 MHz (Ideal),15.0,0.0,6.46,0.00
-LED crudo 3 MHz (Ideal),20.0,0.0,2.36,0.00
-LED crudo 3 MHz (Ideal),30.0,0.0,-2.89,0.00
-LED crudo 3 MHz (Ideal),50.0,0.0,-9.05,0.00
-LED crudo 3 MHz (Ideal),75.0,0.0,-13.88,0.00
-LED crudo 3 MHz (Ideal),100.0,0.0,-17.33,0.00
-Base pre-ec. 15 MHz (Ideal),1.0,100.0,48.92,1.00
-Base pre-ec. 15 MHz (Ideal),2.0,100.0,42.94,2.00
-Base pre-ec. 15 MHz (Ideal),5.0,100.0,34.93,5.00
-Base pre-ec. 15 MHz (Ideal),10.0,100.0,28.74,10.00
-Base pre-ec. 15 MHz (Ideal),15.0,100.0,24.78,15.00
-Base pre-ec. 15 MHz (Ideal),20.0,100.0,21.38,20.00
-Base pre-ec. 15 MHz (Ideal),30.0,97.5,15.52,30.00
-Base pre-ec. 15 MHz (Ideal),50.0,0.0,7.53,1.43
-Base pre-ec. 15 MHz (Ideal),75.0,0.0,1.45,0.00
-Base pre-ec. 15 MHz (Ideal),100.0,0.0,-2.62,0.00
-Filtro azul 25 MHz (Ideal),1.0,100.0,48.92,1.00
-Filtro azul 25 MHz (Ideal),2.0,100.0,42.94,2.00
-Filtro azul 25 MHz (Ideal),5.0,100.0,34.93,5.00
-Filtro azul 25 MHz (Ideal),10.0,100.0,28.76,10.00
-Filtro azul 25 MHz (Ideal),15.0,100.0,25.08,15.00
-Filtro azul 25 MHz (Ideal),20.0,100.0,22.38,20.00
-Filtro azul 25 MHz (Ideal),30.0,100.0,18.20,30.00
-Filtro azul 25 MHz (Ideal),50.0,13.0,11.73,41.43
-Filtro azul 25 MHz (Ideal),75.0,0.0,5.91,0.43
-Filtro azul 25 MHz (Ideal),100.0,0.0,1.81,0.00
-"Combinado (Base 15 MHz, sin FEC)",1.0,89.8,40.91,0.92
-"Combinado (Base 15 MHz, sin FEC)",2.0,88.8,36.32,1.82
-"Combinado (Base 15 MHz, sin FEC)",5.0,87.3,29.42,4.46
-"Combinado (Base 15 MHz, sin FEC)",10.0,86.7,23.66,8.78
-"Combinado (Base 15 MHz, sin FEC)",15.0,85.9,19.91,13.07
-"Combinado (Base 15 MHz, sin FEC)",20.0,84.2,16.83,17.32
-"Combinado (Base 15 MHz, sin FEC)",30.0,9.5,11.65,22.02
-"Combinado (Base 15 MHz, sin FEC)",50.0,0.0,4.46,0.00
-"Combinado (Base 15 MHz, sin FEC)",75.0,0.0,-1.20,0.00
-"Combinado (Base 15 MHz, sin FEC)",100.0,0.0,-5.09,0.00
-Combinado (Filtro azul 25 MHz+FEC),1.0,92.2,43.41,0.87
-Combinado (Filtro azul 25 MHz+FEC),2.0,91.9,37.92,1.73
-Combinado (Filtro azul 25 MHz+FEC),5.0,91.6,30.27,4.31
-Combinado (Filtro azul 25 MHz+FEC),10.0,90.4,24.14,8.50
-Combinado (Filtro azul 25 MHz+FEC),15.0,88.5,20.40,12.57
-Combinado (Filtro azul 25 MHz+FEC),20.0,87.6,17.67,16.50
-Combinado (Filtro azul 25 MHz+FEC),30.0,86.6,13.59,24.49
-Combinado (Filtro azul 25 MHz+FEC),50.0,9.6,7.73,10.96
-Combinado (Filtro azul 25 MHz+FEC),75.0,0.0,2.59,0.00
-Combinado (Filtro azul 25 MHz+FEC),100.0,0.0,-1.11,0.00
+LED crudo 3 MHz (Ideal),1.0,100.0,66.88,1.00
+LED crudo 3 MHz (Ideal),2.0,100.0,63.80,2.00
+LED crudo 3 MHz (Ideal),5.0,100.0,59.19,5.00
+LED crudo 3 MHz (Ideal),10.0,100.0,52.92,10.00
+LED crudo 3 MHz (Ideal),15.0,100.0,45.87,15.00
+LED crudo 3 MHz (Ideal),20.0,100.0,36.12,20.00
+LED crudo 3 MHz (Ideal),30.0,0.0,-300.00,0.00
+LED crudo 3 MHz (Ideal),50.0,0.0,-300.00,0.00
+LED crudo 3 MHz (Ideal),75.0,0.0,-300.00,0.00
+LED crudo 3 MHz (Ideal),100.0,0.0,-300.00,0.00
+Base pre-ec. 15 MHz (Ideal),1.0,100.0,66.88,1.00
+Base pre-ec. 15 MHz (Ideal),2.0,100.0,63.80,2.00
+Base pre-ec. 15 MHz (Ideal),5.0,100.0,59.60,5.00
+Base pre-ec. 15 MHz (Ideal),10.0,100.0,56.20,10.00
+Base pre-ec. 15 MHz (Ideal),15.0,100.0,53.97,15.00
+Base pre-ec. 15 MHz (Ideal),20.0,100.0,52.04,20.00
+Base pre-ec. 15 MHz (Ideal),30.0,100.0,48.47,30.00
+Base pre-ec. 15 MHz (Ideal),50.0,100.0,40.41,50.00
+Base pre-ec. 15 MHz (Ideal),75.0,87.4,24.04,66.67
+Base pre-ec. 15 MHz (Ideal),100.0,1.7,-300.00,1.68
+Filtro azul 25 MHz (Ideal),1.0,100.0,66.61,1.00
+Filtro azul 25 MHz (Ideal),2.0,100.0,63.50,2.00
+Filtro azul 25 MHz (Ideal),5.0,100.0,59.20,5.00
+Filtro azul 25 MHz (Ideal),10.0,100.0,55.59,10.00
+Filtro azul 25 MHz (Ideal),15.0,100.0,53.14,15.00
+Filtro azul 25 MHz (Ideal),20.0,100.0,51.08,20.00
+Filtro azul 25 MHz (Ideal),30.0,100.0,47.60,30.00
+Filtro azul 25 MHz (Ideal),50.0,100.0,40.94,50.00
+Filtro azul 25 MHz (Ideal),75.0,100.0,31.68,75.00
+Filtro azul 25 MHz (Ideal),100.0,77.9,18.43,81.49
+"Combinado (Base 15 MHz, sin FEC)",1.0,91.6,43.09,0.93
+"Combinado (Base 15 MHz, sin FEC)",2.0,90.8,39.99,1.84
+"Combinado (Base 15 MHz, sin FEC)",5.0,90.2,35.73,4.54
+"Combinado (Base 15 MHz, sin FEC)",10.0,89.0,32.24,9.02
+"Combinado (Base 15 MHz, sin FEC)",15.0,87.6,29.88,13.40
+"Combinado (Base 15 MHz, sin FEC)",20.0,86.6,27.88,17.69
+"Combinado (Base 15 MHz, sin FEC)",30.0,84.5,24.08,25.99
+"Combinado (Base 15 MHz, sin FEC)",50.0,69.4,15.16,39.71
+"Combinado (Base 15 MHz, sin FEC)",75.0,0.0,-300.00,0.00
+"Combinado (Base 15 MHz, sin FEC)",100.0,0.0,-300.00,0.00
+Combinado (Filtro azul 25 MHz+FEC),1.0,93.0,49.08,0.87
+Combinado (Filtro azul 25 MHz+FEC),2.0,92.7,45.97,1.74
+Combinado (Filtro azul 25 MHz+FEC),5.0,92.7,41.68,4.35
+Combinado (Filtro azul 25 MHz+FEC),10.0,91.6,38.12,8.62
+Combinado (Filtro azul 25 MHz+FEC),15.0,90.8,35.72,12.78
+Combinado (Filtro azul 25 MHz+FEC),20.0,90.5,33.76,17.01
+Combinado (Filtro azul 25 MHz+FEC),30.0,89.7,30.39,25.32
+Combinado (Filtro azul 25 MHz+FEC),50.0,86.6,23.75,40.90
+Combinado (Filtro azul 25 MHz+FEC),75.0,74.3,12.73,54.49
+Combinado (Filtro azul 25 MHz+FEC),100.0,0.0,-300.00,0.00

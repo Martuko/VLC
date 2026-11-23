@@ -1,0 +1,1258 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Simulador 3D de VLC en una nave industrial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #e2e6e5; --panel: #f2f4f3; --panel-2: #e9eceb; --ink: #1e2a2f; --muted: #56646a; --line: #c3cac9;
+  --safety: #f2b705; --hivis: #e8641b; --rf: #b4236d; --ok: #0f7a74; --fail: #c0362c; --scene-bg: #d5dad9;
+  --focus: #1f6fd1;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131a1d; --panel: #1a2327; --panel-2: #212c31; --ink: #e2e8e9; --muted: #98a5aa; --line: #2f3c42;
+    --rf: #e0549b; --ok: #2db3a5; --fail: #ec5d50; --scene-bg: #0f1518; --focus: #6aa8ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131a1d; --panel: #1a2327; --panel-2: #212c31; --ink: #e2e8e9; --muted: #98a5aa; --line: #2f3c42;
+  --rf: #e0549b; --ok: #2db3a5; --fail: #ec5d50; --scene-bg: #0f1518; --focus: #6aa8ff; color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  height: 100%; margin: 0; background: var(--bg); color: var(--ink);
+  font-family: "Barlow", "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: 15px; line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+h1, h2, h3, .cond { font-family: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.app {
+  height: 100%; display: grid;
+  grid-template-columns: minmax(270px, 300px) 1fr minmax(270px, 310px);
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "top top top" "ctl stage met";
+}
+.top {
+  grid-area: top; display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 10px 18px; border-bottom: 1px solid var(--line); background: var(--panel);
+}
+.top h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: 0.2px; line-height: 1.1; }
+.top h1 small { display: block; font-family: "Barlow", sans-serif; font-weight: 400; font-size: 13px; color: var(--muted); letter-spacing: 0; }
+.mode { display: inline-flex; border: 1.5px solid var(--ink); border-radius: 999px; overflow: hidden; margin-left: auto; }
+.mode button { border: 0; background: transparent; padding: 6px 16px; cursor: pointer; font-weight: 600; }
+.mode button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.mode button[data-mode="wifi"][aria-pressed="true"] { background: var(--rf); color: #fff; }
+.iconbtn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+
+.controls, .metrics { overflow-y: auto; background: var(--panel); padding: 6px 16px 24px; }
+.controls { grid-area: ctl; border-right: 1px solid var(--line); }
+.metrics { grid-area: met; border-left: 1px solid var(--line); }
+.group { padding: 12px 0 10px; border-bottom: 1px solid var(--line); }
+.group:last-child { border-bottom: 0; }
+.group h2 { margin: 0 0 8px; font-size: 18px; font-weight: 600; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.presets button { border: 1px solid var(--line); background: var(--panel-2); border-radius: 6px; padding: 4px 9px; cursor: pointer; font-size: 13.5px; }
+.presets button:hover { border-color: var(--ink); }
+.presets button.active { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+.field { margin: 9px 0; }
+.field label { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; }
+.field label output { color: var(--muted); white-space: nowrap; }
+input[type="range"] { width: 100%; accent-color: var(--ok); margin: 4px 0 0; }
+.wifi-only input[type="range"] { accent-color: var(--rf); }
+.toggles { display: grid; gap: 6px; margin-top: 4px; }
+.toggle { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.toggle input { width: 16px; height: 16px; accent-color: var(--ok); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: var(--panel-2); padding: 4px 10px; cursor: pointer; font-size: 13.5px; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 8px 0; font-size: 14px; }
+.btn-main { width: 100%; border: 0; border-radius: 8px; padding: 9px 12px; background: var(--ink); color: var(--panel); font-weight: 600; cursor: pointer; }
+.btn-main:disabled { opacity: 0.55; cursor: progress; }
+.note { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+
+.stage { grid-area: stage; position: relative; min-height: 0; overflow: hidden; background: var(--scene-bg); }
+#viewport { position: absolute; inset: 0; }
+#viewport canvas { display: block; touch-action: none; }
+.overlay { position: absolute; pointer-events: none; }
+.legend { left: 14px; bottom: 14px; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; font-size: 12.5px; width: min(320px, calc(100% - 28px)); }
+.legend .bar { height: 10px; border-radius: 3px; margin: 6px 0 3px; }
+.legend .ticks { display: flex; justify-content: space-between; color: var(--muted); }
+.legend .title { font-weight: 600; }
+.hint { right: 14px; top: 12px; font-size: 13px; background: color-mix(in srgb, var(--panel) 85%, transparent);
+  border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+.busy { left: 50%; top: 14px; transform: translateX(-50%); background: var(--ink); color: var(--panel); border-radius: 999px;
+  padding: 5px 14px; font-size: 13px; opacity: 0; transition: opacity 0.15s; }
+.busy.on { opacity: 0.92; }
+
+.metric { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.metric h2 { margin: 0 0 2px; font-size: 18px; font-weight: 600; }
+.metric .sub { font-size: 12.5px; color: var(--muted); margin: 0 0 8px; }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tile { border-radius: 8px; padding: 8px 10px; background: var(--panel-2); border-left: 4px solid var(--ok); }
+.tile.rf { border-left-color: var(--rf); }
+.tile .k { font-size: 12.5px; color: var(--muted); }
+.tile .v { font-family: "Barlow Condensed", sans-serif; font-size: 30px; font-weight: 700; line-height: 1.05; }
+.tile .u { font-size: 13px; color: var(--muted); }
+.tile.dim .v { color: var(--muted); }
+.kv { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; font-size: 13.5px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; text-align: right; }
+.pass { color: var(--ok); font-weight: 600; }
+.failc { color: var(--fail); font-weight: 600; }
+.progress { height: 6px; background: var(--panel-2); border-radius: 3px; overflow: hidden; margin-top: 8px; display: none; }
+.progress > div { height: 100%; width: 0; background: var(--ok); }
+
+dialog { max-width: 620px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--ink); padding: 18px 22px; }
+dialog::backdrop { background: rgba(10, 15, 18, 0.45); }
+dialog h2 { margin-top: 0; font-size: 24px; }
+dialog p, dialog li { font-size: 14.5px; max-width: 70ch; }
+
+@media (max-width: 980px) {
+  .app { height: auto; min-height: 100%; grid-template-columns: 1fr; grid-template-rows: auto 56vh auto auto;
+    grid-template-areas: "top" "stage" "met" "ctl"; }
+  .controls, .metrics { border: 0; border-top: 1px solid var(--line); overflow: visible; }
+  .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+}
+@media (prefers-reduced-motion: reduce) { .busy { transition: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Simulador 3D de VLC en una nave industrial<small>Nave metalmecánica de 15 × 15 × 6 m con polvo, calor, obstáculos e interferencia electromagnética</small></h1>
+    <div class="mode" role="group" aria-label="Tecnología que se muestra en el mapa">
+      <button type="button" data-mode="vlc" aria-pressed="true">Luz visible (VLC)</button>
+      <button type="button" data-mode="wifi" aria-pressed="false">Wi-Fi 2,4 GHz</button>
+    </div>
+    <button type="button" class="iconbtn" id="btnHelp">Cómo funciona</button>
+  </header>
+
+  <aside class="controls" aria-label="Controles de la simulación">
+    <section class="group">
+      <h2>Escenarios del informe</h2>
+      <div class="presets" id="presets">
+        <button type="button" data-preset="s0" class="active">Ideal</button>
+        <button type="button" data-preset="s1">Polvo</button>
+        <button type="button" data-preset="s2">Calor 70 °C</button>
+        <button type="button" data-preset="s3">Sol directo</button>
+        <button type="button" data-preset="s4">Obstáculos</button>
+        <button type="button" data-preset="s5">Todo combinado</button>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2>Entorno hostil</h2>
+      <div class="field"><label for="vis">Polvo en suspensión <output id="o_vis"></output></label>
+        <input type="range" id="vis" min="0" max="7" step="1" value="0"></div>
+      <div class="field"><label for="days">Días sin limpiar ópticas <output id="o_days"></output></label>
+        <input type="range" id="days" min="0" max="120" step="1" value="0"></div>
+      <div class="field"><label for="temp">Temperatura ambiente <output id="o_temp"></output></label>
+        <input type="range" id="temp" min="0" max="90" step="1" value="25"></div>
+      <div class="field"><label for="ibg">Luz ambiente (sol, horno) <output id="o_ibg"></output></label>
+        <input type="range" id="ibg" min="100" max="6000" step="100" value="1000"></div>
+    </section>
+
+    <section class="group">
+      <h2>Tránsito en la nave</h2>
+      <div class="field"><label for="workers">Operarios <output id="o_workers"></output></label>
+        <input type="range" id="workers" min="0" max="40" step="1" value="0"></div>
+      <div class="row"><span id="flNote">Grúas horquilla: una cada 10 operarios</span>
+        <button type="button" class="iconbtn" id="btnShuffle">Sortear posiciones</button></div>
+    </section>
+
+    <section class="group">
+      <h2>Enlace de luz visible</h2>
+      <div class="field"><label for="rate">Tasa de bits <output id="o_rate"></output></label>
+        <input type="range" id="rate" min="1" max="50" step="1" value="10"></div>
+      <div class="row"><span>Luminarias</span>
+        <div class="seg" id="segGrid"><button type="button" data-v="3" aria-pressed="true">3 × 3</button><button type="button" data-v="4" aria-pressed="false">4 × 4</button></div></div>
+      <div class="row"><span>Receptor del AGV</span>
+        <div class="seg" id="segRx"><button type="button" data-v="pd" aria-pressed="true">1 fotodiodo</button><button type="button" data-v="adr" aria-pressed="false">ADR 5 ramas</button></div></div>
+      <div class="row" id="rowFov"><span>Campo de visión</span>
+        <div class="seg" id="segFov"><button type="button" data-v="40" aria-pressed="false">40°</button><button type="button" data-v="60" aria-pressed="true">60°</button><button type="button" data-v="80" aria-pressed="false">80°</button></div></div>
+      <div class="row"><span>LED</span>
+        <div class="seg" id="segLed"><button type="button" data-v="3" aria-pressed="false">Sin ecualizar</button><button type="button" data-v="15" aria-pressed="true">Pre-ecualizado</button></div></div>
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" id="blue"> Filtro óptico azul (25 MHz, rechaza sol)</label>
+        <label class="toggle"><input type="checkbox" id="fec"> Corrección de errores RS(255,239)</label>
+      </div>
+    </section>
+
+    <section class="group wifi-only">
+      <h2>Wi-Fi y eficiencia</h2>
+      <div class="field"><label for="emi">EMI de máquinas respecto al modelo <output id="o_emi"></output></label>
+        <input type="range" id="emi" min="-20" max="20" step="1" value="0"></div>
+      <div class="field"><label for="pled">Consumo extra por luminaria (driver VLC) <output id="o_pled"></output></label>
+        <input type="range" id="pled" min="0.1" max="3" step="0.05" value="1"></div>
+      <div class="field"><label for="pap">Consumo del punto de acceso Wi-Fi <output id="o_pap"></output></label>
+        <input type="range" id="pap" min="4" max="20" step="0.5" value="12"></div>
+    </section>
+
+    <section class="group">
+      <h2>Capas de la escena</h2>
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" id="lyRays" checked> Rayos del AGV a cada luminaria</label>
+        <label class="toggle"><input type="checkbox" id="lyCones"> Conos de luz de las luminarias</label>
+        <label class="toggle"><input type="checkbox" id="lyDust" checked> Partículas de polvo</label>
+        <label class="toggle"><input type="checkbox" id="lyLabels" checked> Nombres de las máquinas</label>
+      </div>
+    </section>
+  </aside>
+
+  <main class="stage" aria-label="Vista 3D de la nave">
+    <div id="viewport"></div>
+    <div class="overlay hint" id="hint">Arrastra el AGV o haz clic en el piso para moverlo</div>
+    <div class="overlay busy" id="busy" role="status" aria-live="polite">Calculando…</div>
+    <div class="overlay legend" id="legend"></div>
+  </main>
+
+  <aside class="metrics" aria-label="Resultados">
+    <section class="metric">
+      <h2>Confiabilidad</h2>
+      <p class="sub">Área libre con BER ≤ 10⁻⁶ en esta configuración</p>
+      <div class="duo">
+        <div class="tile"><div class="k">VLC</div><div class="v" id="m_cov_vlc">–</div><div class="u">del área</div></div>
+        <div class="tile rf"><div class="k">Wi-Fi 2,4 GHz</div><div class="v" id="m_cov_wifi">–</div><div class="u">disponibilidad ≥ 99 %</div></div>
+      </div>
+    </section>
+    <section class="metric">
+      <h2>Eficiencia</h2>
+      <p class="sub">Tasa útil sin errores y megabits por joule de consumo extra para comunicar</p>
+      <div class="duo">
+        <div class="tile"><div class="k">VLC</div><div class="v" id="m_gp_vlc">–</div><div class="u" id="m_ee_vlc">–</div></div>
+        <div class="tile rf"><div class="k">Wi-Fi</div><div class="v" id="m_gp_wifi">–</div><div class="u" id="m_ee_wifi">–</div></div>
+      </div>
+      <p class="note" id="m_breakeven"></p>
+    </section>
+    <section class="metric">
+      <h2>Disponibilidad con tránsito</h2>
+      <p class="sub">Monte Carlo: sortea operarios y grúas muchas veces y cuenta dónde el enlace nunca falla</p>
+      <button type="button" class="btn-main" id="btnMC">Calcular disponibilidad (60 sorteos)</button>
+      <div class="progress" id="mcProg"><div></div></div>
+      <dl class="kv" id="mcOut" style="margin-top:8px"></dl>
+    </section>
+    <section class="metric">
+      <h2>AGV seleccionado</h2>
+      <dl class="kv" id="probe"></dl>
+    </section>
+    <section class="metric">
+      <h2>Estado físico</h2>
+      <dl class="kv" id="diag"></dl>
+    </section>
+  </aside>
+</div>
+
+<dialog id="help" aria-labelledby="helpTitle">
+  <h2 id="helpTitle">Cómo funciona este simulador</h2>
+  <p>Cada punto del piso representa un AGV con su receptor a 1 m de altura. Para cada punto se calcula, en tu navegador, la luz que llega de cada luminaria (trayecto directo y reflexiones en las paredes), cómo la atenúan el polvo y la suciedad, cuánto ruido agregan la luz ambiente y la temperatura, y con eso la tasa de error de bit (BER).</p>
+  <ul>
+    <li><b>Verde azulado</b>: el enlace cumple BER ≤ 10⁻⁶ con margen. <b>Amarillo</b>: cumple justo. <b>Rojo</b>: falla.</li>
+    <li>Los rayos del AGV son verdes si la luminaria se ve, rojos si un obstáculo la tapa y grises si queda fuera del campo de visión.</li>
+    <li>En modo Wi-Fi el mapa muestra la disponibilidad bajo la interferencia de horno, soldadura y variadores (círculos magenta).</li>
+  </ul>
+  <p>El cálculo es el mismo modelo del simulador en Python (<code>vlc_core.py</code>, modelo de ISI por apertura de ojo), validado contra él con diferencias menores a 0,1 dB. Simplificación de la versión web: los operarios y grúas bloquean la línea de vista pero no las reflexiones en paredes.</p>
+  <p>Los consumos eléctricos de la métrica de eficiencia son supuestos; muévelos para ver desde qué valor VLC deja de ser más eficiente que Wi-Fi.</p>
+  <form method="dialog"><button class="btn-main" style="width:auto;padding:8px 18px">Entendido</button></form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* vlc_physics.js — port a JavaScript del núcleo vlc_core.py (modelo de ISI por apertura de ojo).
+ * Sin dependencias ni DOM: se usa en el navegador (inline en index.html) y en Node para validar contra Python.
+ * Unidades SI. Simplificación declarada: los obstáculos móviles bloquean la línea de vista, no las reflexiones. */
+const VLC = (() => {
+  "use strict";
+  const Q_E = 1.602176634e-19, K_B = 1.380649e-23, C = 2.99792458e8;
+
+  // ---------------------------------------------------------------- funciones especiales
+  function erfc(x) { // Numerical Recipes erfcc, error relativo < 1.2e-7 en todo el dominio
+    const z = Math.abs(x), t = 1 / (1 + 0.5 * z);
+    const r = t * Math.exp(-z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418 +
+      t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398 + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277)))))))));
+    return x >= 0 ? r : 2 - r;
+  }
+  const qfunc = (x) => 0.5 * erfc(x / Math.SQRT2);
+  function lgamma(x) { // Lanczos
+    const g = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155,
+      0.1208650973866179e-2, -0.5395239384953e-5];
+    let y = x, tmp = x + 5.5; tmp -= (x + 0.5) * Math.log(tmp);
+    let ser = 1.000000000190015;
+    for (let j = 0; j < 6; j++) ser += g[j] / ++y;
+    return -tmp + Math.log(2.5066282746310005 * ser / x);
+  }
+  function betacf(a, b, x) {
+    const MAXIT = 300, EPS = 3e-16, FPMIN = 1e-300;
+    let qab = a + b, qap = a + 1, qam = a - 1, c = 1, d = 1 - qab * x / qap;
+    if (Math.abs(d) < FPMIN) d = FPMIN; d = 1 / d; let h = d;
+    for (let m = 1; m <= MAXIT; m++) {
+      const m2 = 2 * m;
+      let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+      d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d; h *= d * c;
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+      d = 1 + aa * d; if (Math.abs(d) < FPMIN) d = FPMIN; c = 1 + aa / c; if (Math.abs(c) < FPMIN) c = FPMIN;
+      d = 1 / d; const del = d * c; h *= del;
+      if (Math.abs(del - 1) < EPS) break;
+    }
+    return h;
+  }
+  function betai(a, b, x) { // función beta incompleta regularizada I_x(a,b)
+    if (x <= 0) return 0; if (x >= 1) return 1;
+    const bt = Math.exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * Math.log(x) + b * Math.log1p(-x));
+    return x < (a + 1) / (a + b + 2) ? bt * betacf(a, b, x) / a : 1 - bt * betacf(b, a, 1 - x) / b;
+  }
+  function rsPostFecBer(pb, n = 255, k = 239, m = 8) {
+    const t = (n - k) >> 1;
+    pb = Math.min(Math.max(pb, 0), 0.5);
+    const ps = Math.min(Math.max(-Math.expm1(m * Math.log1p(-pb)), 0), 1);
+    return pb * betai(t, n - t, ps);
+  }
+  function goodputMbps(Rb, ber, rate = 1, L = 1000) {
+    const pb = Math.min(Math.max(ber, 0), 1 - 1e-15);
+    const per = Math.min(Math.max(-Math.expm1(L * Math.log1p(-pb)), 0), 1);
+    return (Rb / 1e6) * rate * (1 - per);
+  }
+  function hgFovFraction(fov, g) {
+    const c = Math.cos(Math.min(Math.max(fov, 0), Math.PI));
+    if (Math.abs(g) < 1e-6) return 0.5 * (1 - c);
+    const v = ((1 - g * g) / (2 * g)) * (1 / (1 - g) - 1 / Math.sqrt(1 + g * g - 2 * g * c));
+    return Math.min(Math.max(v, 0), 1);
+  }
+  function ledBwEff(Rb, f3db) {
+    if (!isFinite(f3db)) return 1;
+    const tau = 1 / (2 * Math.PI * f3db);
+    return Math.min(Math.max(-Math.expm1(-(1 / Rb) / tau), 0), 1);
+  }
+
+  // ---------------------------------------------------------------- parámetros (idénticos a Params de vlc_core.py)
+  const GRID3 = [[2.5, 2.5], [2.5, 7.5], [2.5, 12.5], [7.5, 2.5], [7.5, 7.5], [7.5, 12.5], [12.5, 2.5], [12.5, 7.5], [12.5, 12.5]];
+  const C4 = [1.1, 5.4, 9.6, 13.9];
+  const GRID4 = []; for (const x of C4) for (const y of C4) GRID4.push([x, y]);
+  function defaults() {
+    return {
+      L: 15, W: 15, H: 6, rho_wall: 0.4, dA_wall: 0.75,
+      led_xy: GRID3, z_led: 5.8, P_opt: 45, led_wall_plug_eff: 0.45, P_comm_extra_per_led: 1.0, P_rx_vlc: 0.5,
+      LER: 300, phi_half_deg: 60, mod_index: 0.2,
+      f_3db_led: 15e6, use_blue_filter: false, f_3db_blue: 25e6, Ts_blue_signal: 0.55, Ts_blue_bg: 0.25,
+      z_rx: 1.0, A_pd: 1e-4, fov_deg: 60, n_conc: 1.5, Ts_filter: 1.0, resp: 0.53,
+      adr_enabled: false, adr_tilt_deg: 35, adr_fov_deg: 45,
+      I_bg: 1000e-6, I2: 0.562, I3: 0.0868, G_ol: 10, eta_cap: 112e-12 / 1e-4, Gamma: 1.5, g_m: 30e-3, I_dark0: 10e-9,
+      Rb: 10e6, use_fec: false, packet_bits: 1000,
+      T_amb: 25, delta_T_j_nom: 30.25, T_j_ref: 55.25, k_T_led: 0.004, T_j_derate: 85, derate_slope: 0.015, k_soil_th: 0.25,
+      visibility: Infinity, dust_albedo: 0.65, dust_g_hg: 0.70, enable_scattering: true,
+      days_dirty: 0, tau_rx_days: 30, tau_tx_days: 120,
+    };
+  }
+  function optimizedGrid(p) {
+    const n0 = p.led_xy.length;
+    return Object.assign({}, p, { led_xy: GRID4, P_opt: n0 * p.P_opt / 16, phi_half_deg: 65,
+      P_comm_extra_per_led: p.P_comm_extra_per_led * n0 / 16 });
+  }
+  const D = {
+    m: (p) => -Math.log(2) / Math.log(Math.cos(p.phi_half_deg * Math.PI / 180)),
+    beta: (p) => (isFinite(p.visibility) ? 3.912 / p.visibility : 0),
+    Tsrx: (p) => Math.exp(-p.days_dirty / p.tau_rx_days),
+    Tstx: (p) => Math.exp(-p.days_dirty / p.tau_tx_days),
+    Tj: (p) => p.T_amb + p.delta_T_j_nom * (1 + p.k_soil_th * (1 - Math.exp(-p.days_dirty / p.tau_tx_days))),
+    derating(p) {
+      const tj = D.Tj(p); let f = 1 - p.k_T_led * (tj - p.T_j_ref);
+      if (p.T_j_derate != null && tj > p.T_j_derate) f *= Math.max(0, 1 - p.derate_slope * (tj - p.T_j_derate));
+      return Math.max(0, f);
+    },
+    f3db: (p) => (p.use_blue_filter ? p.f_3db_blue : p.f_3db_led),
+    TsBlue: (p) => (p.use_blue_filter ? p.Ts_blue_signal : 1),
+    codeRate: (p) => (p.use_fec ? 239 / 255 : 1),
+    Pcomm: (p) => p.led_xy.length * p.P_comm_extra_per_led + p.P_rx_vlc * (p.adr_enabled ? 1.6 : 1),
+    IbgEff: (p, A) => p.I_bg * (A / 1e-4) * Math.exp(-p.days_dirty / p.tau_rx_days) * p.Ts_filter * (p.use_blue_filter ? p.Ts_blue_bg : 1),
+  };
+
+  // ---------------------------------------------------------------- planta
+  const STATIC = [
+    { name: "Estantería A", b: [1.0, 7.0, 13.2, 14.2, 5.0] },
+    { name: "Estantería B", b: [8.0, 14.0, 13.2, 14.2, 5.0] },
+    { name: "Prensa", b: [1.5, 3.5, 1.5, 3.5, 4.0] },
+    { name: "CNC 1", b: [5.5, 8.5, 2.5, 4.5, 2.5] },
+    { name: "CNC 2", b: [10.5, 13.5, 1.5, 4.0, 2.5] },
+    { name: "Horno de inducción", b: [10.0, 13.0, 7.0, 10.0, 3.5] },
+    { name: "Cinta + soldadura", b: [1.0, 8.5, 8.0, 8.8, 1.3] },
+  ];
+  const STATIC_BOXES = STATIC.map((s) => s.b);
+  const EMI_SOURCES = [
+    { name: "Horno de inducción", s: [11.5, 8.5, 2.0, 38.0] },
+    { name: "Puesto soldadura", s: [4.75, 8.4, 1.5, 36.0] },
+    { name: "Prensa (VFD)", s: [2.5, 2.5, 2.0, 30.0] },
+    { name: "CNC 1 (VFD)", s: [7.0, 3.5, 1.8, 28.0] },
+    { name: "CNC 2 (VFD)", s: [12.0, 2.75, 1.8, 28.0] },
+  ];
+
+  function rng(seed) { // mulberry32
+    let a = seed >>> 0;
+    const f = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    f.normal = () => { let u = 0; while (u === 0) u = f(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * f()); };
+    return f;
+  }
+  function randomDynamic(r, nWorkers, nForklifts, p) {
+    const out = [];
+    const free = (b) => STATIC_BOXES.every((s) => b[1] < s[0] || b[0] > s[1] || b[3] < s[2] || b[2] > s[3]);
+    for (const [n, sx, sy, h] of [[nWorkers, 0.5, 0.5, 1.8], [nForklifts, 1.2, 2.4, 2.3]]) {
+      let k = 0, tries = 0;
+      while (k < n && tries < 50 * Math.max(n, 1)) {
+        tries++;
+        const rot = r() < 0.5, a = rot ? sy : sx, c = rot ? sx : sy;
+        const cx = a / 2 + r() * (p.L - a), cy = c / 2 + r() * (p.W - c);
+        const b = [cx - a / 2, cx + a / 2, cy - c / 2, cy + c / 2, h];
+        if (free(b)) { out.push(b); k++; }
+      }
+    }
+    return out;
+  }
+  function segBlocked(px, py, pz, qx, qy, qz, boxes) {
+    const eps = 1e-12;
+    const dx = qx - px, dy = qy - py, dz = qz - pz;
+    const ix = 1 / (Math.abs(dx) < eps ? (dx >= 0 ? eps : -eps) : dx);
+    const iy = 1 / (Math.abs(dy) < eps ? (dy >= 0 ? eps : -eps) : dy);
+    const iz = 1 / (Math.abs(dz) < eps ? (dz >= 0 ? eps : -eps) : dz);
+    for (let k = 0; k < boxes.length; k++) {
+      const b = boxes[k];
+      let t1 = (b[0] - px) * ix, t2 = (b[1] - px) * ix;
+      let tmin = Math.min(t1, t2), tmax = Math.max(t1, t2);
+      t1 = (b[2] - py) * iy; t2 = (b[3] - py) * iy;
+      tmin = Math.max(tmin, Math.min(t1, t2)); tmax = Math.min(tmax, Math.max(t1, t2));
+      t1 = (0 - pz) * iz; t2 = (b[4] - pz) * iz;
+      tmin = Math.max(tmin, Math.min(t1, t2)); tmax = Math.min(tmax, Math.max(t1, t2));
+      if (tmax >= Math.max(tmin, 0) && tmin <= 1 && tmax > 1e-6) return true;
+    }
+    return false;
+  }
+  const insideAny = (x, y, boxes) => boxes.some((b) => x >= b[0] && x <= b[1] && y >= b[2] && y <= b[3]);
+  function receiverGrid(p, step) {
+    const xs = [], ys = [];
+    for (let v = step / 2; v < p.L - 1e-9; v += step) xs.push(+v.toFixed(6));
+    for (let v = step / 2; v < p.W - 1e-9; v += step) ys.push(+v.toFixed(6));
+    const pts = new Float64Array(xs.length * ys.length * 3); let i = 0;
+    for (const y of ys) for (const x of xs) { pts[i++] = x; pts[i++] = y; pts[i++] = p.z_rx; }
+    return { pts, xs, ys, n: xs.length * ys.length };
+  }
+  function walls(p) {
+    const d = p.dA_wall, c = [], n = [];
+    const zs = [], xs = [], ys = [];
+    for (let v = d / 2; v < p.H - 1e-9; v += d) zs.push(v);
+    for (let v = d / 2; v < p.L - 1e-9; v += d) xs.push(v);
+    for (let v = d / 2; v < p.W - 1e-9; v += d) ys.push(v);
+    for (const x of xs) for (const z of zs) { c.push([x, 0, z]); n.push([0, 1, 0]); c.push([x, p.W, z]); n.push([0, -1, 0]); }
+    for (const y of ys) for (const z of zs) { c.push([0, y, z]); n.push([1, 0, 0]); c.push([p.L, y, z]); n.push([-1, 0, 0]); }
+    return { c, n, dA: d * d };
+  }
+  function adrNormals(tiltDeg) {
+    const th = tiltDeg * Math.PI / 180, s = Math.sin(th), c = Math.cos(th);
+    return [[0, 0, 1], [s, 0, c], [0, s, c], [-s, 0, c], [0, -s, c]];
+  }
+  // Ramas del receptor: 1 fotodiodo vertical o ADR piramidal (5 ramas, área total conservada)
+  function branches(p) {
+    if (!p.adr_enabled) return [{ n: [0, 0, 1], fov: p.fov_deg * Math.PI / 180, A: p.A_pd }];
+    return adrNormals(p.adr_tilt_deg).map((n) => ({ n, fov: p.adr_fov_deg * Math.PI / 180, A: p.A_pd / 5 }));
+  }
+
+  // ---------------------------------------------------------------- canal
+  /* LOS para un receptor: devuelve, por rama, ganancias h[led] y distancias d[led]. */
+  function losChannel(p, x, y, z, boxes, brs) {
+    const m = D.m(p), nl = p.led_xy.length;
+    const d = new Float64Array(nl), base = new Float64Array(nl), vx = new Float64Array(nl), vy = new Float64Array(nl), vz = new Float64Array(nl);
+    for (let j = 0; j < nl; j++) {
+      const lx = p.led_xy[j][0], ly = p.led_xy[j][1], lz = p.z_led;
+      const ax = lx - x, ay = ly - y, az = lz - z, dd = Math.hypot(ax, ay, az);
+      d[j] = dd; vx[j] = ax / dd; vy[j] = ay / dd; vz[j] = az / dd;
+      const cphi = az / dd;
+      if (cphi <= 0 || (boxes.length && segBlocked(x, y, z, lx, ly, lz, boxes))) { base[j] = 0; continue; }
+      base[j] = (m + 1) / (2 * Math.PI * dd * dd) * Math.pow(cphi, m) * p.Ts_filter;
+    }
+    return brs.map((br) => {
+      const g = p.n_conc * p.n_conc / Math.pow(Math.sin(br.fov), 2), h = new Float64Array(nl);
+      for (let j = 0; j < nl; j++) {
+        if (base[j] === 0) continue;
+        const cpsi = vx[j] * br.n[0] + vy[j] * br.n[1] + vz[j] * br.n[2];
+        if (cpsi > 0 && Math.acos(Math.min(cpsi, 1)) <= br.fov) h[j] = base[j] * br.A * g * cpsi;
+      }
+      return { h, d };
+    });
+  }
+  /* Histograma de reflexiones de 1.er orden (sin polvo), por rama: Float32Array(nRx * nb). */
+  function reflections(p, grid, boxes, brs, dt = 1e-9, nb = 300, onProgress) {
+    const W = walls(p), m = D.m(p), nl = p.led_xy.length, nw = W.c.length;
+    const a1 = new Float64Array(nl * nw), d1 = new Float64Array(nl * nw);
+    for (let j = 0; j < nl; j++) {
+      const lx = p.led_xy[j][0], ly = p.led_xy[j][1], lz = p.z_led;
+      for (let w = 0; w < nw; w++) {
+        const [cx, cy, cz] = W.c[w], [nx, ny, nz] = W.n[w];
+        const vx = cx - lx, vy = cy - ly, vz = cz - lz, dd = Math.hypot(vx, vy, vz);
+        const cphi = -vz / dd, calpha = -(vx * nx + vy * ny + vz * nz) / dd;
+        d1[j * nw + w] = dd;
+        if (cphi > 0 && calpha > 0 && !(boxes.length && segBlocked(cx, cy, cz, lx, ly, lz, boxes)))
+          a1[j * nw + w] = (m + 1) / (2 * Math.PI) * Math.pow(cphi, m) * calpha / (dd * dd);
+      }
+    }
+    const out = brs.map(() => new Float32Array(grid.n * nb));
+    const gb = brs.map((br) => p.n_conc * p.n_conc / Math.pow(Math.sin(br.fov), 2));
+    for (let i = 0; i < grid.n; i++) {
+      const x = grid.pts[3 * i], y = grid.pts[3 * i + 1], z = grid.pts[3 * i + 2];
+      for (let w = 0; w < nw; w++) {
+        const [cx, cy, cz] = W.c[w], [nx, ny, nz] = W.n[w];
+        const vx = x - cx, vy = y - cy, vz = z - cz, d2 = Math.hypot(vx, vy, vz);
+        const cbeta = (vx * nx + vy * ny + vz * nz) / d2;
+        if (cbeta <= 0) continue;
+        let blockedChecked = false, blocked = false;
+        for (let b = 0; b < brs.length; b++) {
+          const br = brs[b];
+          const cpsi = -(vx * br.n[0] + vy * br.n[1] + vz * br.n[2]) / d2;
+          if (cpsi <= 0 || Math.acos(Math.min(cpsi, 1)) > br.fov) continue;
+          if (!blockedChecked) { blocked = boxes.length > 0 && segBlocked(x, y, z, cx, cy, cz, boxes); blockedChecked = true; }
+          if (blocked) break;
+          const a2 = p.rho_wall * W.dA * cbeta / (Math.PI * d2 * d2) * br.A * p.Ts_filter * gb[b] * cpsi;
+          const o = out[b], off = i * nb;
+          for (let j = 0; j < nl; j++) {
+            const a = a1[j * nw + w]; if (a === 0) continue;
+            let k = Math.floor((d1[j * nw + w] + d2) / C / dt); if (k > nb - 1) k = nb - 1;
+            o[off + k] += a * a2;
+          }
+        }
+      }
+      if (onProgress && (i & 63) === 0) onProgress(i / grid.n);
+    }
+    return { hist: out, dt, nb };
+  }
+
+  // ---------------------------------------------------------------- rendimiento (modelo de ojo)
+  function noiseVar(p, Pdc, A) {
+    const B = p.Rb, TK = p.T_amb + 273.15;
+    const Idark = p.I_dark0 * (A / 1e-4) * Math.pow(2, (p.T_amb - 25) / 10);
+    const sShot = 2 * Q_E * p.resp * Pdc * B + 2 * Q_E * D.IbgEff(p, A) * p.I2 * B + 2 * Q_E * Idark * B;
+    const Cc = p.eta_cap * A;
+    const sTh = (8 * Math.PI * K_B * TK / p.G_ol) * Cc * p.I2 * B * B + (16 * Math.PI * Math.PI * K_B * TK * p.Gamma / p.g_m) * Cc * Cc * p.I3 * B * B * B;
+    return { sShot, sTh, v: sShot + sTh };
+  }
+  const _t = new Float64Array(64), _g = new Float64Array(64), _ord = new Int32Array(64);
+  /* Términos de amplitud de una rama: señal, ISI tardía, ISI temprana y varianza de ruido. */
+  function eyeTerms(p, br, h, d, hist, off, dt, nb) {
+    const beta = D.beta(p), scale = p.P_opt * D.derating(p) * D.Tsrx(p) * D.Tstx(p) * D.TsBlue(p);
+    const nl = h.length, Tb = 1 / p.Rb;
+    let nc = 0, Gtot = 0;
+    const scat = p.enable_scattering && beta > 0;
+    const phi = scat ? hgFovFraction(br.fov, p.dust_g_hg) : 0, w0 = p.dust_albedo;
+    for (let j = 0; j < nl; j++) {
+      if (h[j] === 0) continue;
+      const tau = beta * d[j], tl = d[j] / C;
+      _t[nc] = tl; _g[nc] = h[j] * Math.exp(-tau); Gtot += _g[nc]; nc++;
+      if (scat) {
+        const gs = h[j] * phi * (-Math.expm1(-w0 * tau)) * Math.exp(-(1 - w0) * tau);
+        _t[nc] = tl + tl * (1 + tau) * (1 - p.dust_g_hg) * 0.5; _g[nc] = gs; Gtot += gs; nc++;
+      }
+    }
+    // orden de las llegadas puntuales (pocas) y fusión con el histograma (ya ordenado en el tiempo)
+    for (let i = 0; i < nc; i++) _ord[i] = i;
+    for (let i = 1; i < nc; i++) { const v = _ord[i]; let k = i - 1; while (k >= 0 && _t[_ord[k]] > _t[v]) { _ord[k + 1] = _ord[k]; k--; } _ord[k + 1] = v; }
+    let Hsum = 0;
+    if (hist) for (let k = 0; k < nb; k++) { const g = hist[off + k]; if (g > 0) Hsum += g * Math.exp(-beta * C * (k + 0.5) * dt); }
+    Gtot += Hsum;
+    if (Gtot <= 0) return { As: 0, Al: 0, Ae: 0, v: noiseVar(p, 0, br.A).v, Pdc: 0 };
+    // mediana ponderada de los tiempos de llegada
+    const half = 0.5 * Gtot; let cum = 0, t0 = NaN, ip = 0, k = 0;
+    while (isNaN(t0)) {
+      const tp = ip < nc ? _t[_ord[ip]] : Infinity;
+      let th = Infinity, gh = 0;
+      if (hist) { while (k < nb && !(hist[off + k] > 0)) k++; if (k < nb) { th = k * dt; gh = hist[off + k] * Math.exp(-beta * C * (k + 0.5) * dt); } }
+      if (tp === Infinity && th === Infinity) { t0 = 0; break; }
+      if (tp <= th) { cum += _g[_ord[ip]]; if (cum >= half) t0 = tp; ip++; }
+      else { cum += gh; if (cum >= half) t0 = th; k++; }
+    }
+    let S = 0, Il = 0, Ie = 0;
+    const acc = (t, g) => { const dl = t - t0, w = Math.min(Math.abs(dl) / Tb, 1); S += g * (1 - w); if (dl > 0) Il += g * w; else if (dl < 0) Ie += g * w; };
+    for (let i = 0; i < nc; i++) acc(_t[i], _g[i]);
+    if (hist) for (let q = 0; q < nb; q++) { const g = hist[off + q]; if (g > 0) acc(q * dt, g * Math.exp(-beta * C * (q + 0.5) * dt)); }
+    const eta = ledBwEff(p.Rb, D.f3db(p));
+    Il += (1 - eta) * S; S *= eta;
+    const amp = p.resp * p.mod_index * scale, Pdc = scale * Gtot;
+    return { As: amp * S, Al: amp * Il, Ae: amp * Ie, v: noiseVar(p, Pdc, br.A).v, Pdc };
+  }
+  function eyeBer(As, Al, Ae, v) {
+    const s = Math.sqrt(Math.max(v, 1e-300));
+    return 0.25 * (qfunc((As + Al + Ae) / s) + qfunc((As + Al - Ae) / s) + qfunc((As - Al + Ae) / s) + qfunc((As - Al - Ae) / s));
+  }
+  /* Rendimiento en un punto: combina las ramas (MRC si ADR). */
+  function pointPerf(p, brs, los, refl, i) {
+    let as, al, ae, v;
+    if (brs.length === 1) {
+      const e = eyeTerms(p, brs[0], los[0].h, los[0].d, refl ? refl.hist[0] : null, i * (refl ? refl.nb : 0), refl ? refl.dt : 0, refl ? refl.nb : 0);
+      as = e.As; al = e.Al; ae = e.Ae; v = Math.max(e.v, 1e-300);
+    } else {
+      let Ss = 0, L = 0, E = 0;
+      for (let b = 0; b < brs.length; b++) {
+        const e = eyeTerms(p, brs[b], los[b].h, los[b].d, refl ? refl.hist[b] : null, i * (refl ? refl.nb : 0), refl ? refl.dt : 0, refl ? refl.nb : 0);
+        const vb = Math.max(e.v, 1e-300);
+        Ss += e.As * e.As / vb; L += e.As * e.Al / vb; E += e.As * e.Ae / vb;
+      }
+      const nrm = Math.sqrt(Math.max(Ss, 1e-300));
+      as = nrm; al = L / nrm; ae = E / nrm; v = 1;
+    }
+    const berPre = eyeBer(as, al, ae, v);
+    const ber = p.use_fec ? rsPostFecBer(berPre) : berPre;
+    const eye = Math.max(as - al - ae, 0);
+    const snrDb = 10 * Math.log10(Math.max(eye * eye / v, 1e-30));
+    const gp = goodputMbps(p.Rb, ber, D.codeRate(p), p.packet_bits);
+    return { snrDb, berPre, ber, gp };
+  }
+  function evaluateVLC(p, grid, boxes, refl) {
+    const brs = branches(p), n = grid.n;
+    const snr = new Float32Array(n), ber = new Float64Array(n), gp = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = grid.pts[3 * i], y = grid.pts[3 * i + 1], z = grid.pts[3 * i + 2];
+      const r = pointPerf(p, brs, losChannel(p, x, y, z, boxes, brs), refl, i);
+      snr[i] = r.snrDb; ber[i] = r.ber; gp[i] = r.gp;
+    }
+    return { snr, ber, gp };
+  }
+
+  // ---------------------------------------------------------------- Wi-Fi 2,4 GHz (3GPP InF-SH + Middleton Class A)
+  function wifiDefaults() {
+    return { fc_GHz: 2.4, Pt_dBm: 20, G_ant_dBi: 2, BW: 20e6, Rb_target: 10e6, NF_dB: 7, ap_pos: [7.5, 7.5, 5.5],
+      sigma_los: 4.3, sigma_nlos: 5.9, K_los_dB: 7, body_loss_dB: 4, emi_A: 0.1, emi_floor_dB: 14, emi_decay_exp: 2,
+      use_fec: false, packet_bits: 1000, P_ap_W: 12, P_rx_wifi_W: 1.5, emi_scale_dB: 0 };
+  }
+  function emiAt(w, x, y, z) {
+    let pr = Math.pow(10, w.emi_floor_dB / 10);
+    for (const e of EMI_SOURCES) {
+      const d = Math.max(Math.hypot(x - e.s[0], y - e.s[1], z - e.s[2]), 1);
+      pr += Math.pow(10, e.s[3] / 10) * Math.pow(d, -w.emi_decay_exp);
+    }
+    return 10 * Math.log10(pr) + (w.emi_scale_dB || 0);
+  }
+  function middletonBer(g0, emiDb, A) {
+    const inv = emiDb > -60 ? Math.pow(10, emiDb / 10) : 0;
+    let ber = 0, pm = Math.exp(-A);
+    for (let m = 0; m <= 20; m++) {
+      if (m > 0) pm *= A / m;
+      if (pm < 1e-15) break;
+      ber += pm * qfunc(Math.sqrt(2 * g0 / (1 + (m / A) * inv)));
+    }
+    return ber;
+  }
+  /* Wi-Fi en un punto: disponibilidad sobre nFad muestras de desvanecimiento. */
+  function wifiPoint(w, x, y, z, heavy, workers, sfNorm, r, nFad) {
+    const ap = w.ap_pos, d3 = Math.max(Math.hypot(x - ap[0], y - ap[1], z - ap[2]), 1);
+    const los = !(heavy.length && segBlocked(x, y, z, ap[0], ap[1], ap[2], heavy));
+    const body = workers.length && segBlocked(x, y, z, ap[0], ap[1], ap[2], workers) ? w.body_loss_dB : 0;
+    const plL = 31.84 + 21.5 * Math.log10(d3) + 19.0 * Math.log10(w.fc_GHz);
+    const plN = Math.max(32.4 + 23.0 * Math.log10(d3) + 20.0 * Math.log10(w.fc_GHz), plL);
+    const pl = los ? plL : plN, sf = (los ? w.sigma_los : w.sigma_nlos) * sfNorm;
+    const prx = w.Pt_dBm + 2 * w.G_ant_dBi - pl - sf - body;
+    const nTh = -174 + 10 * Math.log10(w.BW) + w.NF_dB, emi = emiAt(w, x, y, z);
+    const K = Math.pow(10, w.K_los_dB / 10), s = Math.sqrt(K / (K + 1)), sg = Math.sqrt(1 / (2 * (K + 1)));
+    let ok = 0, gpSum = 0;
+    for (let f = 0; f < nFad; f++) {
+      let pw;
+      if (los) { const a = s + sg * r.normal(), b = sg * r.normal(); pw = a * a + b * b; }
+      else { const a = r.normal() / Math.SQRT2, b = r.normal() / Math.SQRT2; pw = a * a + b * b; }
+      const snrTh = prx + 10 * Math.log10(Math.max(pw, 1e-30)) - nTh;
+      const g0 = Math.pow(10, snrTh / 10) * (w.BW / w.Rb_target);
+      const bp = middletonBer(g0, emi, w.emi_A), bb = w.use_fec ? rsPostFecBer(bp) : bp;
+      if (bb <= 1e-6) ok++;
+      gpSum += goodputMbps(w.Rb_target, bb, w.use_fec ? 239 / 255 : 1, w.packet_bits);
+    }
+    return { avail: ok / nFad, gp: gpSum / nFad, los, emi, snrMeanDb: prx - (nTh + 10 * Math.log10(1 + Math.pow(10, emi / 10))) };
+  }
+  const wifiPcomm = (w) => w.P_ap_W + w.P_rx_wifi_W;
+
+  // ---------------------------------------------------------------- iluminancia (EN 12464-1)
+  function illuminance(p, grid, withReflections = true) {
+    const m = D.m(p), I0 = p.P_opt * p.LER * (m + 1) / (2 * Math.PI), E = new Float64Array(grid.n);
+    for (let i = 0; i < grid.n; i++) {
+      const x = grid.pts[3 * i], y = grid.pts[3 * i + 1], z = grid.pts[3 * i + 2];
+      for (const [lx, ly] of p.led_xy) { const vz = p.z_led - z, d = Math.hypot(lx - x, ly - y, vz), c = vz / d; if (c > 0) E[i] += I0 * Math.pow(c, m) * c / (d * d); }
+    }
+    if (withReflections) {
+      const W = walls(p), Ew = new Float64Array(W.c.length);
+      W.c.forEach((c, w) => { for (const [lx, ly] of p.led_xy) { const vx = c[0] - lx, vy = c[1] - ly, vz = c[2] - p.z_led, d = Math.hypot(vx, vy, vz);
+        const cp = -vz / d, ca = -(vx * W.n[w][0] + vy * W.n[w][1] + vz * W.n[w][2]) / d; if (cp > 0 && ca > 0) Ew[w] += I0 * Math.pow(cp, m) * ca / (d * d); } });
+      for (let i = 0; i < grid.n; i++) {
+        const x = grid.pts[3 * i], y = grid.pts[3 * i + 1], z = grid.pts[3 * i + 2];
+        W.c.forEach((c, w) => { const vx = x - c[0], vy = y - c[1], vz = z - c[2], d = Math.hypot(vx, vy, vz);
+          const cb = (vx * W.n[w][0] + vy * W.n[w][1] + vz * W.n[w][2]) / d, cpsi = -vz / d;
+          if (cb > 0 && cpsi > 0) E[i] += p.rho_wall * Ew[w] * W.dA / Math.PI * cb * cpsi / (d * d); });
+      }
+    }
+    let s = 0, mn = Infinity; for (const e of E) { s += e; mn = Math.min(mn, e); }
+    return { E, mean: s / grid.n, u0: mn / (s / grid.n) };
+  }
+
+  return { qfunc, rsPostFecBer, goodputMbps, hgFovFraction, ledBwEff, defaults, optimizedGrid, D, STATIC, STATIC_BOXES,
+    EMI_SOURCES, rng, randomDynamic, segBlocked, insideAny, receiverGrid, walls, branches, losChannel, reflections,
+    eyeTerms, eyeBer, pointPerf, evaluateVLC, wifiDefaults, wifiPoint, wifiPcomm, emiAt, middletonBer, illuminance,
+    GRID3, GRID4 };
+})();
+if (typeof module !== "undefined") module.exports = VLC;
+
+</script>
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const L = 15, W = 15, H = 6;
+const VIS = [Infinity, 200, 100, 50, 20, 10, 7, 5];
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const fmt = (v, d = 1) => (Number.isFinite(v) ? v.toFixed(d).replace(".", ",") : "–");
+const SUP = { "-": "⁻", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
+function sci(v) {
+  if (v >= 0.01) return fmt(v, 3);
+  if (!(v >= 1e-15)) return "< 10⁻¹⁵";
+  const e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e);
+  return fmt(m, 1) + " × 10" + String(e).split("").map((c) => SUP[c]).join("");
+}
+const cssVar = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+// ------------------------------------------------------------------ estado
+const S = {
+  mode: "vlc", vis: 0, days: 0, temp: 25, ibg: 1000, workers: 0, rate: 10, grid: 3, rx: "pd", fov: 60, led: 15,
+  blue: false, fec: false, emi: 0, pled: 1, pap: 12, seed: 7,
+  agv: [6.25, 6.25], mc: null, fl: null,
+};
+const PRESETS = {
+  s0: { vis: 0, days: 0, temp: 25, ibg: 1000, workers: 0, fl: null },
+  s1: { vis: 4, days: 30, temp: 25, ibg: 1000, workers: 0, fl: null },
+  s2: { vis: 0, days: 0, temp: 70, ibg: 1000, workers: 0, fl: null },
+  s3: { vis: 0, days: 0, temp: 25, ibg: 5100, workers: 0, fl: null },
+  s4: { vis: 0, days: 0, temp: 25, ibg: 1000, workers: 12, fl: 3 },
+  s5: { vis: 4, days: 30, temp: 70, ibg: 5100, workers: 12, fl: 3 },
+};
+
+const grid = VLC.receiverGrid(VLC.defaults(), 0.5);
+const NX = grid.xs.length, NY = grid.ys.length;
+const staticMask = new Uint8Array(grid.n);
+for (let i = 0; i < grid.n; i++) staticMask[i] = VLC.insideAny(grid.pts[3 * i], grid.pts[3 * i + 1], VLC.STATIC_BOXES) ? 1 : 0;
+const sfRng = VLC.rng(2023), sfNorm = new Float64Array(grid.n).map(() => sfRng.normal());
+let dyn = [];
+function forklifts(n) { return S.fl != null ? S.fl : Math.floor(n / 10); }
+function regenDyn() { dyn = VLC.randomDynamic(VLC.rng(S.seed), S.workers, forklifts(S.workers), VLC.defaults()); }
+
+function buildParams() {
+  let p = VLC.defaults();
+  if (S.grid === 4) p = VLC.optimizedGrid(p);
+  Object.assign(p, {
+    visibility: VIS[S.vis], days_dirty: S.days, T_amb: S.temp, I_bg: S.ibg * 1e-6, Rb: S.rate * 1e6,
+    adr_enabled: S.rx === "adr", fov_deg: S.fov, f_3db_led: S.led * 1e6, use_blue_filter: S.blue, use_fec: S.fec,
+    P_comm_extra_per_led: S.pled,
+  });
+  return p;
+}
+function wifiParams() { return Object.assign(VLC.wifiDefaults(), { use_fec: S.fec, Rb_target: S.rate * 1e6, emi_scale_dB: S.emi, P_ap_W: S.pap }); }
+
+const reflCache = new Map();
+function getRefl(p) {
+  const key = `${S.grid}|${S.rx}|${S.rx === "pd" ? S.fov : 45}`;
+  if (!reflCache.has(key)) reflCache.set(key, VLC.reflections(p, grid, VLC.STATIC_BOXES, VLC.branches(p)));
+  return reflCache.get(key);
+}
+const illumCache = new Map();
+function getIllum(p) {
+  if (!illumCache.has(S.grid)) illumCache.set(S.grid, VLC.illuminance(p, grid, true));
+  return illumCache.get(S.grid);
+}
+
+// ------------------------------------------------------------------ escena 3D
+const vp = $("viewport");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+vp.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 300);
+camera.position.set(15, 16, 19);
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 1.2, 0); controls.enableDamping = !reduceMotion; controls.maxPolarAngle = Math.PI / 2 - 0.04;
+controls.minDistance = 6; controls.maxDistance = 60;
+const P3 = (x, y, z) => new THREE.Vector3(x - L / 2, z, W / 2 - y);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8f8e, 0.85));
+const sun = new THREE.DirectionalLight(0xffffff, 0.55); sun.position.set(10, 20, 8); scene.add(sun);
+
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(L, W), new THREE.MeshStandardMaterial({ color: 0xb9bebd, roughness: 0.95 }));
+floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const heatCanvas = document.createElement("canvas"); heatCanvas.width = NX; heatCanvas.height = NY;
+const heatCtx = heatCanvas.getContext("2d");
+const heatTex = new THREE.CanvasTexture(heatCanvas); heatTex.magFilter = THREE.LinearFilter; heatTex.minFilter = THREE.LinearFilter;
+const heat = new THREE.Mesh(new THREE.PlaneGeometry(L, W), new THREE.MeshBasicMaterial({ map: heatTex, transparent: true, opacity: 0.95, depthWrite: false }));
+heat.rotation.x = -Math.PI / 2; heat.position.y = 0.012; scene.add(heat);
+const gridHelper = new THREE.GridHelper(L, 15, 0x6c7676, 0x6c7676); gridHelper.position.y = 0.02;
+gridHelper.material.transparent = true; gridHelper.material.opacity = 0.16; scene.add(gridHelper);
+
+// la caja se extiende 0,2 m bajo el piso para que su cara inferior no compita con el piso (z-fighting)
+const hall = new THREE.Mesh(new THREE.BoxGeometry(L, H + 0.2, W), new THREE.MeshStandardMaterial({ color: 0xdfe3e2, side: THREE.BackSide, transparent: true, opacity: 0.5, depthWrite: false }));
+hall.position.y = H / 2 - 0.1; scene.add(hall);
+const hallEdges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(L, H, W)), new THREE.LineBasicMaterial({ color: 0x55605f, transparent: true, opacity: 0.6 }));
+hallEdges.position.y = H / 2; scene.add(hallEdges);
+
+function boxMesh(b, color, opts = {}) {
+  const [x0, x1, y0, y1, h] = b;
+  const g = new THREE.BoxGeometry(x1 - x0, h, y1 - y0);
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.7, metalness: 0.15 }, opts)));
+  const c = P3((x0 + x1) / 2, (y0 + y1) / 2, h / 2); m.position.copy(c);
+  const e = new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({ color: 0x1e2a2f, transparent: true, opacity: 0.45 }));
+  m.add(e);
+  return m;
+}
+function textSprite(text, size = 0.42) {
+  const c = document.createElement("canvas"), ctx = c.getContext("2d");
+  const fs = 44; ctx.font = `600 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+  const w = Math.ceil(ctx.measureText(text).width) + 28; c.width = w; c.height = fs + 22;
+  ctx.font = `600 ${fs}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+  ctx.fillStyle = "rgba(30,42,47,0.86)"; const r = 12;
+  ctx.beginPath(); ctx.moveTo(r, 0); ctx.arcTo(w, 0, w, c.height, r); ctx.arcTo(w, c.height, 0, c.height, r); ctx.arcTo(0, c.height, 0, 0, r); ctx.arcTo(0, 0, w, 0, r); ctx.fill();
+  ctx.fillStyle = "#f2f4f3"; ctx.textBaseline = "middle"; ctx.fillText(text, 14, c.height / 2 + 2);
+  const tex = new THREE.CanvasTexture(c); tex.minFilter = THREE.LinearFilter;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+  s.scale.set(size * w / c.height, size, 1); s.renderOrder = 10;
+  return s;
+}
+const machineColors = { "Estantería A": 0x5f6b70, "Estantería B": 0x5f6b70, "Prensa": 0x7d8a8f, "CNC 1": 0x8f9ea3, "CNC 2": 0x8f9ea3, "Horno de inducción": 0x6b5d57, "Cinta + soldadura": 0x9aa4a3 };
+const labels = new THREE.Group(); scene.add(labels);
+let ovenMesh = null;
+VLC.STATIC.forEach((s) => {
+  const m = boxMesh(s.b, machineColors[s.name] || 0x888888, s.name.startsWith("Horno") ? { emissive: new THREE.Color(0xff5a1f), emissiveIntensity: 0 } : {});
+  scene.add(m); if (s.name.startsWith("Horno")) ovenMesh = m;
+  if (s.name.startsWith("Estantería")) { // baldas
+    const [x0, x1, y0, y1, h] = s.b;
+    for (let z = 1.25; z < h; z += 1.25) { const sh = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0 + 0.02, 0.05, y1 - y0 + 0.02), new THREE.MeshStandardMaterial({ color: 0xe8641b })); sh.position.copy(P3((x0 + x1) / 2, (y0 + y1) / 2, z)); scene.add(sh); }
+  }
+});
+function buildLabels() {
+  labels.clear();
+  VLC.STATIC.forEach((s) => { const lb = textSprite(s.name); lb.position.copy(P3((s.b[0] + s.b[1]) / 2, (s.b[2] + s.b[3]) / 2, s.b[4] + 0.45)); labels.add(lb); });
+}
+buildLabels();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(buildLabels);
+
+// Wi-Fi: punto de acceso y fuentes de EMI
+const rfGroup = new THREE.Group(); scene.add(rfGroup);
+const apMesh = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.14, 0.55), new THREE.MeshStandardMaterial({ color: 0xb4236d, emissive: 0xb4236d, emissiveIntensity: 0.35 }));
+apMesh.position.copy(P3(7.5, 7.5, 5.5)); scene.add(apMesh);
+const emiRings = VLC.EMI_SOURCES.map((e) => {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), new THREE.MeshBasicMaterial({ color: 0xb4236d, transparent: true, opacity: 0.18, depthWrite: false }));
+  m.position.copy(P3(e.s[0], e.s[1], e.s[2])); m.userData.base = 0.6 + (e.s[3] - 26) * 0.07; rfGroup.add(m); return m;
+});
+
+// Luminarias y conos
+const lumGroup = new THREE.Group(), coneGroup = new THREE.Group(); coneGroup.visible = false; scene.add(lumGroup); scene.add(coneGroup);
+function buildLuminaires(p) {
+  lumGroup.clear(); coneGroup.clear();
+  const half = p.phi_half_deg * Math.PI / 180, hgt = p.z_led;
+  for (const [x, y] of p.led_xy) {
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.45, 0.16, 28), new THREE.MeshStandardMaterial({ color: 0xf2b705, emissive: 0xf2b705, emissiveIntensity: 0.9 }));
+    m.position.copy(P3(x, y, p.z_led)); lumGroup.add(m);
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, H - p.z_led, 6), new THREE.MeshStandardMaterial({ color: 0x444b4d }));
+    rod.position.copy(P3(x, y, (H + p.z_led) / 2)); lumGroup.add(rod);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(hgt * Math.tan(half), hgt, 36, 1, true), new THREE.MeshBasicMaterial({ color: 0xf2b705, transparent: true, opacity: 0.07, depthWrite: false, side: THREE.DoubleSide }));
+    cone.position.copy(P3(x, y, hgt / 2)); coneGroup.add(cone);
+  }
+}
+
+// Operarios y grúas
+const dynGroup = new THREE.Group(); scene.add(dynGroup);
+function buildDynamic() {
+  dynGroup.clear();
+  for (const b of dyn) {
+    const cx = (b[0] + b[1]) / 2, cy = (b[2] + b[3]) / 2;
+    if (b[4] < 2) {
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.22, 1.45, 14), new THREE.MeshStandardMaterial({ color: 0xe8641b }));
+      body.position.y = 0.73; g.add(body);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), new THREE.MeshStandardMaterial({ color: 0xd9b48f })); head.position.y = 1.58; g.add(head);
+      const helmet = new THREE.Mesh(new THREE.SphereGeometry(0.15, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xf2b705 })); helmet.position.y = 1.64; g.add(helmet);
+      g.position.copy(P3(cx, cy, 0)); dynGroup.add(g);
+    } else {
+      const sx = b[1] - b[0], sy = b[3] - b[2], g = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.BoxGeometry(sx * 0.95, 1.1, sy * 0.95), new THREE.MeshStandardMaterial({ color: 0xc0362c, roughness: 0.6 })); body.position.y = 0.65; g.add(body);
+      const cab = new THREE.Mesh(new THREE.BoxGeometry(sx * 0.9, 0.08, sy * 0.6), new THREE.MeshStandardMaterial({ color: 0x2a3438 })); cab.position.y = 2.26; g.add(cab);
+      const long = sy > sx, mastOff = (long ? sy : sx) * 0.42;
+      for (const s of [-1, 1]) {
+        const mast = new THREE.Mesh(new THREE.BoxGeometry(0.08, 2.3, 0.08), new THREE.MeshStandardMaterial({ color: 0x2a3438 }));
+        if (long) mast.position.set(s * sx * 0.35, 1.15, -mastOff); else mast.position.set(mastOff, 1.15, s * sy * 0.35);
+        g.add(mast);
+      }
+      g.position.copy(P3(cx, cy, 0)); dynGroup.add(g);
+    }
+  }
+}
+
+// AGV y rayos
+const agv = new THREE.Group();
+const agvBody = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.32, 0.65), new THREE.MeshStandardMaterial({ color: 0x1e2a2f, roughness: 0.5 })); agvBody.position.y = 0.2; agv.add(agvBody);
+const stripe = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.06, 0.67), new THREE.MeshStandardMaterial({ color: 0xf2b705 })); stripe.position.y = 0.3; agv.add(stripe);
+const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.62, 8), new THREE.MeshStandardMaterial({ color: 0x55605f })); mast.position.y = 0.66; agv.add(mast);
+const puck = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.05, 20), new THREE.MeshStandardMaterial({ color: 0x0f7a74, emissive: 0x0f7a74, emissiveIntensity: 0.5 })); puck.position.y = 0.99; agv.add(puck);
+const halo = new THREE.Mesh(new THREE.RingGeometry(0.62, 0.78, 40), new THREE.MeshBasicMaterial({ color: 0xf2b705, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false }));
+halo.rotation.x = -Math.PI / 2; halo.position.y = 0.03; agv.add(halo);
+agv.scale.setScalar(1.25);
+scene.add(agv);
+const rayGroup = new THREE.Group(); scene.add(rayGroup);
+const RAY_COL = { ok: 0x0f9a8f, blocked: 0xc0362c, fov: 0x8a9496 };
+function cylBetween(a, b, color, r = 0.018, opacity = 0.9) {
+  const dir = new THREE.Vector3().subVectors(b, a), len = dir.length();
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 6, 1, true), new THREE.MeshBasicMaterial({ color, transparent: true, opacity, depthWrite: false }));
+  m.position.copy(a).addScaledVector(dir, 0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+  return m;
+}
+
+// Polvo
+const DUST_N = 2600, dustGeo = new THREE.BufferGeometry(), dustPos = new Float32Array(DUST_N * 3);
+const dr = VLC.rng(99); for (let i = 0; i < DUST_N; i++) { dustPos[3 * i] = (dr() - 0.5) * L; dustPos[3 * i + 1] = dr() * H; dustPos[3 * i + 2] = (dr() - 0.5) * W; }
+dustGeo.setAttribute("position", new THREE.BufferAttribute(dustPos, 3));
+const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({ color: 0x8c7f6a, size: 0.06, transparent: true, opacity: 0, depthWrite: false }));
+scene.add(dust);
+
+function applyTheme() {
+  const bg = new THREE.Color(cssVar("--scene-bg") || "#d5dad9");
+  scene.background = bg;
+  if (scene.fog) scene.fog.color = bg;
+}
+
+// ------------------------------------------------------------------ colores del mapa
+const COLORS = {
+  fail: [192, 54, 44], marg: [242, 183, 5], good: [102, 194, 165], best: [15, 106, 116],
+};
+const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+function snrColor(snrDb, ber) {
+  if (!(ber <= 1e-6)) return COLORS.fail;
+  const m = Math.max(0, snrDb - 12);
+  if (m < 12) return mix(COLORS.marg, COLORS.good, m / 12);
+  return mix(COLORS.good, COLORS.best, Math.min(1, (m - 12) / 30));
+}
+function availColor(a) {
+  if (a < 0.99) return mix(COLORS.fail, COLORS.marg, Math.max(0, (a - 0.5) / 0.49));
+  return mix(COLORS.good, COLORS.best, Math.min(1, (a - 0.99) / 0.01));
+}
+function paintHeat(colorAt) {
+  const img = heatCtx.createImageData(NX, NY);
+  for (let iy = 0; iy < NY; iy++) for (let ix = 0; ix < NX; ix++) {
+    const i = iy * NX + ix, row = NY - 1 - iy, o = 4 * (row * NX + ix);
+    const c = colorAt(i);
+    if (!c) { img.data[o + 3] = 0; continue; }
+    img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = 235;
+  }
+  heatCtx.putImageData(img, 0, 0); heatTex.needsUpdate = true;
+}
+function setLegend(kind) {
+  const g = (a) => `rgb(${a.join(",")})`;
+  const el = $("legend");
+  if (kind === "vlc") {
+    el.innerHTML = `<div class="title">Luz visible: calidad del enlace a 1 m de altura</div>
+      <div class="bar" style="background:linear-gradient(90deg, ${g(COLORS.fail)} 0 14%, ${g(COLORS.marg)} 14%, ${g(COLORS.good)} 50%, ${g(COLORS.best)} 100%)"></div>
+      <div class="ticks"><span>falla</span><span>cumple justo</span><span>margen alto</span></div>`;
+  } else {
+    el.innerHTML = `<div class="title">${kind === "wifi" ? "Wi-Fi: disponibilidad bajo interferencia de máquinas" : "Disponibilidad con tránsito (Monte Carlo)"}</div>
+      <div class="bar" style="background:linear-gradient(90deg, ${g(COLORS.fail)} 0 45%, ${g(COLORS.marg)} 45% 55%, ${g(COLORS.good)} 55%, ${g(COLORS.best)} 100%)"></div>
+      <div class="ticks"><span>menos de 99 %</span><span>99 % o más</span></div>`;
+  }
+}
+
+// ------------------------------------------------------------------ cálculo
+let last = null;
+function freeMask() {
+  const m = new Uint8Array(grid.n);
+  for (let i = 0; i < grid.n; i++) m[i] = staticMask[i] || VLC.insideAny(grid.pts[3 * i], grid.pts[3 * i + 1], dyn) ? 0 : 1;
+  return m;
+}
+function compute() {
+  const p = buildParams(), w = wifiParams();
+  const refl = getRefl(p), boxes = VLC.STATIC_BOXES.concat(dyn);
+  const vlc = VLC.evaluateVLC(p, grid, boxes, refl);
+  const heavy = VLC.STATIC_BOXES.filter((b) => b[4] >= 2).concat(dyn.filter((b) => b[4] >= 2));
+  const workersB = dyn.filter((b) => b[4] < 2);
+  const r = VLC.rng(11 + S.seed), wa = new Float32Array(grid.n), wg = new Float32Array(grid.n), we = new Float32Array(grid.n);
+  for (let i = 0; i < grid.n; i++) {
+    const o = VLC.wifiPoint(w, grid.pts[3 * i], grid.pts[3 * i + 1], 1, heavy, workersB, sfNorm[i], r, 40);
+    wa[i] = o.avail; wg[i] = o.gp; we[i] = o.emi;
+  }
+  const free = freeMask();
+  let n = 0, cv = 0, gv = 0, cw = 0, gw = 0; const snrs = [];
+  for (let i = 0; i < grid.n; i++) {
+    if (!free[i]) continue; n++;
+    if (vlc.ber[i] <= 1e-6) cv++; gv += vlc.gp[i]; snrs.push(vlc.snr[i]);
+    if (wa[i] >= 0.99) cw++; gw += wg[i];
+  }
+  snrs.sort((a, b) => a - b);
+  last = { p, w, refl, vlc, wa, wg, we, free, covV: 100 * cv / n, covW: 100 * cw / n, gpV: gv / n, gpW: gw / n, snrMed: snrs[snrs.length >> 1] };
+  render();
+}
+function render() {
+  if (!last) return;
+  const { p, w, vlc, wa, free } = last;
+  const mcOn = S.mc && S.mc.valid;
+  if (mcOn) {
+    const arr = S.mode === "vlc" ? S.mc.availV : S.mc.availW;
+    paintHeat((i) => (free[i] && S.mc.cnt[i] > 0 ? availColor(arr[i]) : null));
+    setLegend("mc");
+  } else if (S.mode === "vlc") {
+    paintHeat((i) => (free[i] ? snrColor(vlc.snr[i], vlc.ber[i]) : null)); setLegend("vlc");
+  } else {
+    paintHeat((i) => (free[i] ? availColor(wa[i]) : null)); setLegend("wifi");
+  }
+  rfGroup.visible = S.mode === "wifi";
+  $("m_cov_vlc").textContent = fmt(last.covV, 1) + " %";
+  $("m_cov_wifi").textContent = fmt(last.covW, 1) + " %";
+  const pv = VLC.D.Pcomm(buildParams()), pw = VLC.wifiPcomm(wifiParams());
+  $("m_gp_vlc").textContent = fmt(last.gpV, 2) + " Mb/s";
+  $("m_gp_wifi").textContent = fmt(last.gpW, 2) + " Mb/s";
+  $("m_ee_vlc").textContent = `${fmt(last.gpV / pv, 2)} Mbit/J con ${fmt(pv, 1)} W`;
+  $("m_ee_wifi").textContent = `${fmt(last.gpW / pw, 2)} Mbit/J con ${fmt(pw, 1)} W`;
+  const nl = p.led_xy.length, prx = p.P_rx_vlc * (p.adr_enabled ? 1.6 : 1);
+  const be = last.gpW > 0 ? (last.gpV * pw / last.gpW - prx) / nl : NaN;
+  $("m_breakeven").textContent = Number.isFinite(be) && be > 0
+    ? `Con estos consumos, VLC es más eficiente mientras cada luminaria gaste menos de ${fmt(be, 2)} W extra en modular.`
+    : "Con estos consumos, VLC no alcanza la eficiencia de Wi-Fi.";
+  const il = getIllum(p);
+  const tj = VLC.D.Tj(p), dr = VLC.D.derating(p), beta = VLC.D.beta(p);
+  $("diag").innerHTML = `
+    <dt>Iluminancia media (nave vacía)</dt><dd>${fmt(il.mean, 0)} lx</dd>
+    <dt>Uniformidad U0 (norma ≥ 0,60)</dt><dd class="${il.u0 >= 0.6 ? "pass" : "failc"}">${fmt(il.u0, 2)}</dd>
+    <dt>SNR mediana en el área libre</dt><dd>${fmt(last.snrMed, 1)} dB</dd>
+    <dt>Temperatura de unión del LED</dt><dd>${fmt(tj, 0)} °C</dd>
+    <dt>Potencia del LED por calor</dt><dd>${fmt(100 * dr, 0)} %</dd>
+    <dt>Extinción por polvo</dt><dd>${fmt(beta, 3)} m⁻¹</dd>
+    <dt>Transmisión de ópticas sucias</dt><dd>${fmt(100 * VLC.D.Tsrx(p) * VLC.D.Tstx(p), 0)} %</dd>
+    <dt>Ancho de banda del LED</dt><dd>${fmt(VLC.D.f3db(p) / 1e6, 0)} MHz</dd>`;
+  // escena
+  const vis = VIS[S.vis];
+  dust.material.opacity = $("lyDust").checked && Number.isFinite(vis) ? Math.min(0.85, 2.2 / vis + 0.05) : 0;
+  scene.fog = Number.isFinite(vis) ? new THREE.FogExp2(scene.background.getHex(), Math.min(0.09, 0.4 / vis)) : null;
+  if (ovenMesh) ovenMesh.material.emissiveIntensity = Math.max(0, Math.min(1, (S.temp - 30) / 55));
+  updateProbe();
+}
+
+// sonda del AGV
+let probeTimer = 0;
+function updateProbe() {
+  if (!last) return;
+  const [x, y] = S.agv, z = 1;
+  agv.position.copy(P3(x, y, 0));
+  const p = last.p, boxes = VLC.STATIC_BOXES.concat(dyn), brs = VLC.branches(p);
+  const one = { pts: new Float64Array([x, y, z]), n: 1 };
+  const refl = VLC.reflections(p, one, VLC.STATIC_BOXES, brs);
+  const los = VLC.losChannel(p, x, y, z, boxes, brs);
+  const r = VLC.pointPerf(p, brs, los, refl, 0);
+  // rayos
+  rayGroup.clear();
+  let seen = 0, blocked = 0;
+  const a = P3(x, y, z);
+  p.led_xy.forEach(([lx, ly], j) => {
+    const lit = los.some((b) => b.h[j] > 0);
+    const isBlocked = VLC.segBlocked(x, y, z, lx, ly, p.z_led, boxes);
+    const kind = lit ? "ok" : isBlocked ? "blocked" : "fov";
+    if (lit) seen++; if (isBlocked) blocked++;
+    if ($("lyRays").checked && S.mode === "vlc") rayGroup.add(cylBetween(a, P3(lx, ly, p.z_led - 0.08), RAY_COL[kind], kind === "ok" ? 0.022 : 0.012, kind === "fov" ? 0.35 : 0.9));
+  });
+  const heavy = VLC.STATIC_BOXES.filter((b) => b[4] >= 2).concat(dyn.filter((b) => b[4] >= 2));
+  const wo = VLC.wifiPoint(last.w, x, y, z, heavy, dyn.filter((b) => b[4] < 2), 0, VLC.rng(5), 400);
+  if (S.mode === "wifi" && $("lyRays").checked) rayGroup.add(cylBetween(a, P3(7.5, 7.5, 5.45), wo.los ? 0xb4236d : 0x8a9496, 0.02, wo.los ? 0.85 : 0.5));
+  const inside = VLC.insideAny(x, y, boxes);
+  $("probe").innerHTML = `
+    <dt>Posición</dt><dd>x ${fmt(x, 1)} m, y ${fmt(y, 1)} m</dd>
+    ${inside ? `<dt>Aviso</dt><dd class="failc">dentro de un obstáculo</dd>` : ""}
+    <dt>Luminarias que ve</dt><dd>${seen} de ${p.led_xy.length}${blocked ? `, ${blocked} tapadas` : ""}</dd>
+    <dt>SNR de apertura de ojo</dt><dd>${fmt(r.snrDb, 1)} dB</dd>
+    <dt>BER de luz visible</dt><dd class="${r.ber <= 1e-6 ? "pass" : "failc"}">${sci(r.ber)}</dd>
+    <dt>Tasa útil de luz visible</dt><dd>${fmt(r.gp, 2)} Mb/s</dd>
+    <dt>Wi-Fi: trayecto al AP</dt><dd>${wo.los ? "despejado" : "obstruido por máquinas"}</dd>
+    <dt>Wi-Fi: interferencia local</dt><dd>${fmt(wo.emi, 0)} dB sobre el ruido</dd>
+    <dt>Wi-Fi: disponibilidad</dt><dd class="${wo.avail >= 0.99 ? "pass" : "failc"}">${fmt(100 * wo.avail, 1)} %</dd>`;
+}
+
+// Monte Carlo
+function runMC() {
+  const btn = $("btnMC"), prog = $("mcProg"), bar = prog.firstElementChild;
+  const N = 60, p = buildParams(), w = wifiParams(), refl = getRefl(p);
+  const okV = new Float32Array(grid.n), okW = new Float32Array(grid.n), cnt = new Float32Array(grid.n);
+  const r = VLC.rng(1000 + S.seed), rw = VLC.rng(2000 + S.seed);
+  const nw = Math.max(S.workers, 0);
+  let k = 0;
+  btn.disabled = true; prog.style.display = "block"; bar.style.width = "0";
+  btn.textContent = "Calculando…";
+  const step = () => {
+    const t0 = performance.now();
+    while (k < N && performance.now() - t0 < 40) {
+      const d = VLC.randomDynamic(r, nw, forklifts(nw), VLC.defaults());
+      const boxes = VLC.STATIC_BOXES.concat(d);
+      const vr = VLC.evaluateVLC(p, grid, boxes, refl);
+      const heavy = VLC.STATIC_BOXES.filter((b) => b[4] >= 2).concat(d.filter((b) => b[4] >= 2)), wk = d.filter((b) => b[4] < 2);
+      for (let i = 0; i < grid.n; i++) {
+        if (staticMask[i] || VLC.insideAny(grid.pts[3 * i], grid.pts[3 * i + 1], d)) continue;
+        cnt[i]++;
+        if (vr.ber[i] <= 1e-6) okV[i]++;
+        const o = VLC.wifiPoint(w, grid.pts[3 * i], grid.pts[3 * i + 1], 1, heavy, wk, sfNorm[i], rw, 1);
+        if (o.avail >= 1) okW[i]++;
+      }
+      k++;
+    }
+    bar.style.width = (100 * k / N) + "%";
+    if (k < N) { setTimeout(step, 0); return; }
+    const availV = new Float32Array(grid.n), availW = new Float32Array(grid.n);
+    let n = 0, gv = 0, gw = 0;
+    for (let i = 0; i < grid.n; i++) {
+      if (cnt[i] === 0) continue; availV[i] = okV[i] / cnt[i]; availW[i] = okW[i] / cnt[i]; n++;
+      if (availV[i] >= 0.99) gv++; if (availW[i] >= 0.99) gw++;
+    }
+    S.mc = { valid: true, availV, availW, cnt };
+    $("mcOut").innerHTML = `<dt>Ubicaciones VLC con ≥ 99 %</dt><dd>${fmt(100 * gv / n, 1)} %</dd>
+      <dt>Ubicaciones Wi-Fi con ≥ 99 %</dt><dd>${fmt(100 * gw / n, 1)} %</dd>
+      <dt>Sorteos</dt><dd>${N} con ${nw} operarios y ${forklifts(nw)} grúas</dd>
+      <dt></dt><dd><button type="button" class="iconbtn" id="btnMCclear">Volver al mapa instantáneo</button></dd>`;
+    $("btnMCclear").addEventListener("click", () => { S.mc = null; $("mcOut").innerHTML = ""; render(); });
+    btn.disabled = false; btn.textContent = "Calcular disponibilidad (60 sorteos)"; prog.style.display = "none";
+    render();
+  };
+  setTimeout(step, 20);
+}
+function invalidateMC() {
+  if (S.mc) { S.mc = null; $("mcOut").innerHTML = `<dt>Resultado anterior</dt><dd>descartado: cambiaste la configuración</dd>`; }
+}
+
+// ------------------------------------------------------------------ interfaz
+let pending = 0;
+function schedule(full = true) {
+  $("busy").classList.add("on");
+  clearTimeout(pending);
+  pending = setTimeout(() => {
+    requestAnimationFrame(() => {
+      if (full) compute(); else render();
+      $("busy").classList.remove("on");
+    });
+  }, 30);
+}
+function syncOutputs() {
+  const v = VIS[S.vis];
+  $("o_vis").textContent = Number.isFinite(v) ? `visibilidad ${v} m` : "aire limpio";
+  $("o_days").textContent = `${S.days} días`;
+  $("o_temp").textContent = `${S.temp} °C`;
+  $("o_ibg").textContent = `${S.ibg} µA`;
+  $("o_workers").textContent = `${S.workers} (+${forklifts(S.workers)} grúas)`;
+  $("flNote").textContent = S.fl != null ? `Grúas horquilla: ${S.fl}, como en el escenario del informe` : "Grúas horquilla: una cada 10 operarios";
+  $("o_rate").textContent = `${S.rate} Mb/s`;
+  $("o_emi").textContent = `${S.emi > 0 ? "+" : ""}${S.emi} dB`;
+  $("o_pled").textContent = `${fmt(S.pled, 2)} W`;
+  $("o_pap").textContent = `${fmt(S.pap, 1)} W`;
+  $("rowFov").style.display = S.rx === "pd" ? "" : "none";
+  for (const [id, key] of [["vis", "vis"], ["days", "days"], ["temp", "temp"], ["ibg", "ibg"], ["workers", "workers"], ["rate", "rate"], ["emi", "emi"], ["pled", "pled"], ["pap", "pap"]]) $(id).value = S[key];
+  $("blue").checked = S.blue; $("fec").checked = S.fec;
+  const segSet = (id, val) => $(id).querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === String(val))));
+  segSet("segGrid", S.grid); segSet("segRx", S.rx); segSet("segFov", S.fov); segSet("segLed", S.led);
+}
+const sliders = { vis: "vis", days: "days", temp: "temp", ibg: "ibg", workers: "workers", rate: "rate", emi: "emi", pled: "pled", pap: "pap" };
+for (const [id, key] of Object.entries(sliders)) {
+  $(id).addEventListener("input", (e) => {
+    S[key] = parseFloat(e.target.value);
+    if (key === "workers") { S.fl = null; regenDyn(); buildDynamic(); }
+    document.querySelectorAll("#presets button").forEach((b) => b.classList.remove("active"));
+    syncOutputs(); invalidateMC(); schedule(!(key === "pled" || key === "pap"));
+  });
+}
+for (const id of ["blue", "fec"]) $(id).addEventListener("change", (e) => { S[id] = e.target.checked; invalidateMC(); schedule(); });
+function segHandler(id, key, cast, onChange) {
+  $(id).addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    S[key] = cast(b.dataset.v); syncOutputs(); invalidateMC();
+    if (onChange) onChange();
+    schedule();
+  });
+}
+segHandler("segGrid", "grid", Number, () => buildLuminaires(buildParams()));
+segHandler("segRx", "rx", String);
+segHandler("segFov", "fov", Number);
+segHandler("segLed", "led", Number);
+document.querySelectorAll(".mode button").forEach((b) => b.addEventListener("click", () => {
+  S.mode = b.dataset.mode;
+  document.querySelectorAll(".mode button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  schedule(false);
+}));
+$("btnShuffle").addEventListener("click", () => { S.seed = (S.seed * 1103515245 + 12345) % 2147483647; regenDyn(); buildDynamic(); invalidateMC(); schedule(); });
+$("presets").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  Object.assign(S, PRESETS[b.dataset.preset]);
+  document.querySelectorAll("#presets button").forEach((x) => x.classList.toggle("active", x === b));
+  regenDyn(); buildDynamic(); syncOutputs(); invalidateMC(); schedule();
+});
+for (const id of ["lyRays", "lyDust"]) $(id).addEventListener("change", () => schedule(false));
+$("lyCones").addEventListener("change", (e) => { coneGroup.visible = e.target.checked; });
+$("lyLabels").addEventListener("change", (e) => { labels.visible = e.target.checked; });
+$("btnMC").addEventListener("click", runMC);
+$("btnHelp").addEventListener("click", () => $("help").showModal());
+
+// arrastre del AGV
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+let dragging = false, downAt = null;
+function toNdc(ev) { const r = renderer.domElement.getBoundingClientRect(); ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1); }
+function floorPoint(ev) { toNdc(ev); ray.setFromCamera(ndc, camera); const v = new THREE.Vector3(); if (!ray.ray.intersectPlane(floorPlane, v)) return null; return [Math.min(L - 0.2, Math.max(0.2, v.x + L / 2)), Math.min(W - 0.2, Math.max(0.2, W / 2 - v.z))]; }
+function moveAgv(pt) { if (!pt) return; S.agv = pt; agv.position.copy(P3(pt[0], pt[1], 0)); clearTimeout(probeTimer); probeTimer = setTimeout(updateProbe, 16); }
+renderer.domElement.addEventListener("pointerdown", (ev) => {
+  toNdc(ev); ray.setFromCamera(ndc, camera);
+  downAt = [ev.clientX, ev.clientY];
+  if (ray.intersectObject(agv, true).length) { dragging = true; controls.enabled = false; renderer.domElement.setPointerCapture(ev.pointerId); }
+});
+renderer.domElement.addEventListener("pointermove", (ev) => { if (dragging) moveAgv(floorPoint(ev)); });
+renderer.domElement.addEventListener("pointerup", (ev) => {
+  if (dragging) { dragging = false; controls.enabled = true; }
+  else if (downAt && Math.hypot(ev.clientX - downAt[0], ev.clientY - downAt[1]) < 5) moveAgv(floorPoint(ev));
+  downAt = null;
+});
+window.addEventListener("keydown", (ev) => {
+  if (ev.target.closest("input, select, button, dialog")) return;
+  const d = { ArrowLeft: [-0.5, 0], ArrowRight: [0.5, 0], ArrowUp: [0, 0.5], ArrowDown: [0, -0.5] }[ev.key];
+  if (d) { ev.preventDefault(); moveAgv([Math.min(L - 0.2, Math.max(0.2, S.agv[0] + d[0])), Math.min(W - 0.2, Math.max(0.2, S.agv[1] + d[1]))]); }
+});
+
+function resize() {
+  const r = vp.getBoundingClientRect(); renderer.setSize(r.width, r.height, false);
+  renderer.domElement.style.width = r.width + "px"; renderer.domElement.style.height = r.height + "px";
+  camera.aspect = r.width / Math.max(r.height, 1); camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(vp);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { applyTheme(); schedule(false); });
+
+let tPrev = performance.now();
+function loop(t) {
+  const dt = Math.min(0.05, (t - tPrev) / 1000); tPrev = t;
+  if (!reduceMotion) {
+    if (dust.material.opacity > 0) {
+      const a = dustGeo.attributes.position.array;
+      for (let i = 0; i < DUST_N; i++) { a[3 * i] += 0.12 * dt; a[3 * i + 1] -= 0.03 * dt; if (a[3 * i] > L / 2) a[3 * i] -= L; if (a[3 * i + 1] < 0) a[3 * i + 1] += H; }
+      dustGeo.attributes.position.needsUpdate = true;
+    }
+    if (rfGroup.visible) emiRings.forEach((m, i) => { const s = m.userData.base * (1 + 0.18 * Math.sin(t / 260 + i * 1.3)); m.scale.setScalar(s); });
+  } else emiRings.forEach((m) => m.scale.setScalar(m.userData.base));
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+
+// arranque
+applyTheme(); resize(); syncOutputs(); regenDyn(); buildDynamic(); buildLuminaires(buildParams());
+agv.position.copy(P3(S.agv[0], S.agv[1], 0));
+$("busy").textContent = "Preparando reflexiones…"; $("busy").classList.add("on");
+requestAnimationFrame(loop);
+setTimeout(() => { compute(); $("busy").classList.remove("on"); $("busy").textContent = "Calculando…"; }, 60);
+})();
+</script>
+</body>
+</html>

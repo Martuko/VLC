@@ -86,9 +86,9 @@ def build_app(show: bool = True):
         extent=[0, P0.L, 0, P0.W],
         cmap="RdYlGn",
         vmin=-5,
-        vmax=45,
+        vmax=65,
     )
-    cbar = fig.colorbar(im, ax=ax, label="SNR intermedia [dB]  (13,5 dB → BER 10⁻⁶)")
+    cbar = fig.colorbar(im, ax=ax, label="SNR (apertura de ojo) [dB]  (13,5 dB → BER 10⁻⁶)")
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")
     patches = []
@@ -193,9 +193,9 @@ def build_app(show: bool = True):
                 r = performance(p, h, d, hist_base[beta], tb)
 
             snr = np.where(free_now, r["snr_db"], np.nan)
-            im.set_clim(-5, 45)
-            im.set_data(np.clip(snr, -5, 45).reshape(len(ys), len(xs)))
-            cbar.set_label("SNR intermedia [dB]  (13,5 dB sin FEC / 10,0 dB RS-FEC)")
+            im.set_clim(-5, 65)
+            im.set_data(np.clip(snr, -5, 65).reshape(len(ys), len(xs)))
+            cbar.set_label("SNR (apertura de ojo) [dB]  (13,5 dB sin FEC / 10,0 dB RS-FEC)")
             artists.extend(ax.plot(p.leds[:, 0], p.leds[:, 1], "*", ms=8, mfc="gold", mec="k"))
 
             cov = 100.0 * np.mean(r["ber"][free_now] <= 1e-6)
