@@ -264,13 +264,18 @@ const VLC = (() => {
   }
 
   // ---------------------------------------------------------------- rendimiento (modelo de ojo)
-  function noiseVar(p, Pdc, A) {
+  function noiseBreakdown(p, Pdc, A) {
     const B = p.Rb, TK = p.T_amb + 273.15;
     const Idark = p.I_dark0 * (A / 1e-4) * Math.pow(2, (p.T_amb - 25) / 10);
-    const sShot = 2 * Q_E * p.resp * Pdc * B + 2 * Q_E * D.IbgEff(p, A) * p.I2 * B + 2 * Q_E * Idark * B;
+    const sShotSignalBg = 2 * Q_E * p.resp * Pdc * B + 2 * Q_E * D.IbgEff(p, A) * p.I2 * B;
+    const sDark = 2 * Q_E * Idark * B;
+    const sShot = sShotSignalBg + sDark;
     const Cc = p.eta_cap * A;
     const sTh = (8 * Math.PI * K_B * TK / p.G_ol) * Cc * p.I2 * B * B + (16 * Math.PI * Math.PI * K_B * TK * p.Gamma / p.g_m) * Cc * Cc * p.I3 * B * B * B;
-    return { sShot, sTh, v: sShot + sTh };
+    return { sShotSignalBg, sDark, sShot, sTh, v: sShot + sTh };
+  }
+  function noiseVar(p, Pdc, A) {
+    return noiseBreakdown(p, Pdc, A);
   }
   const _t = new Float64Array(64), _g = new Float64Array(64), _ord = new Int32Array(64);
   /* Términos de amplitud de una rama: señal, ISI tardía, ISI temprana y varianza de ruido. */
@@ -342,6 +347,25 @@ const VLC = (() => {
     const gp = goodputMbps(p.Rb, ber, D.codeRate(p), p.packet_bits);
     return { snrDb, berPre, ber, gp };
   }
+  function losGrid(p, grid, boxes, brs) {
+    const out = new Array(grid.n);
+    for (let i = 0; i < grid.n; i++) {
+      out[i] = losChannel(p, grid.pts[3 * i], grid.pts[3 * i + 1], grid.pts[3 * i + 2], boxes, brs);
+    }
+    return out;
+  }
+  function evaluateFromLos(p, grid, losAll, refl, indices) {
+    const brs = branches(p);
+    const list = indices || null;
+    const m = list ? list.length : grid.n;
+    const snr = new Float32Array(m), ber = new Float64Array(m), gp = new Float32Array(m);
+    for (let k = 0; k < m; k++) {
+      const i = list ? list[k] : k;
+      const r = pointPerf(p, brs, losAll[i], refl, i);
+      snr[k] = r.snrDb; ber[k] = r.ber; gp[k] = r.gp;
+    }
+    return { snr, ber, gp };
+  }
   function evaluateVLC(p, grid, boxes, refl) {
     const brs = branches(p), n = grid.n;
     const snr = new Float32Array(n), ber = new Float64Array(n), gp = new Float32Array(n);
@@ -351,6 +375,62 @@ const VLC = (() => {
       snr[i] = r.snrDb; ber[i] = r.ber; gp[i] = r.gp;
     }
     return { snr, ber, gp };
+  }
+  function rmsDelaySpreadPoint(p, br, h, d, hist, off, dt, nb) {
+    const beta = D.beta(p), scat = p.enable_scattering && beta > 0;
+    const phi = scat ? hgFovFraction(br.fov, p.dust_g_hg) : 0, w0 = p.dust_albedo;
+    let num1 = 0, num2 = 0, den = 0;
+    for (let j = 0; j < h.length; j++) {
+      if (h[j] <= 0) continue;
+      const tau = beta * d[j], tl = d[j] / C, gl = h[j] * Math.exp(-tau);
+      num1 += gl * tl; num2 += gl * tl * tl; den += gl;
+      if (scat) {
+        const gs = h[j] * phi * (-Math.expm1(-w0 * tau)) * Math.exp(-(1 - w0) * tau);
+        const ts = tl * (1 + tau) * (1 - p.dust_g_hg) * 0.5;
+        const tm = tl + ts;
+        num1 += gs * tm; num2 += gs * (tm * tm + ts * ts); den += gs;
+      }
+    }
+    if (hist) {
+      for (let k = 0; k < nb; k++) {
+        const g0 = hist[off + k]; if (!(g0 > 0)) continue;
+        const tk = k * dt, g = g0 * Math.exp(-beta * C * (k + 0.5) * dt);
+        num1 += g * tk; num2 += g * tk * tk; den += g;
+      }
+    }
+    if (!(den > 0)) return NaN;
+    const mu = num1 / den;
+    return Math.sqrt(Math.max(num2 / den - mu * mu, 0));
+  }
+  function pointImpulse(p, brs, los, refl, i) {
+    const beta = D.beta(p), nb = refl ? refl.nb : 0, dt = refl ? refl.dt : 1e-9;
+    const hr = new Float64Array(nb);
+    if (refl) {
+      for (let b = 0; b < brs.length; b++) {
+        const off = i * nb, h = refl.hist[b];
+        for (let k = 0; k < nb; k++) {
+          const g = h[off + k];
+          if (g > 0) hr[k] += (g * Math.exp(-beta * C * (k + 0.5) * dt)) / dt;
+        }
+      }
+    }
+    const losArrivals = [];
+    const nl = los[0].d.length;
+    for (let j = 0; j < nl; j++) {
+      let gTot = 0;
+      for (let b = 0; b < brs.length; b++) gTot += los[b].h[j];
+      const dd = los[0].d[j];
+      if (gTot > 0) losArrivals.push({ j, tNs: (dd / C) * 1e9, g: gTot * Math.exp(-beta * dd) });
+    }
+    const tauRmsNs = rmsDelaySpreadPoint(p, brs[0], los[0].h, los[0].d, refl ? refl.hist[0] : null, i * nb, dt, nb) * 1e9;
+    // Instante óptimo t0 de la rama principal (0) para marcar en el gráfico
+    let t0Ns = NaN;
+    if (losArrivals.length) {
+      const sorted = losArrivals.slice().sort((a, b) => a.tNs - b.tNs);
+      let gSum = 0; for (const a of sorted) gSum += a.g;
+      let acc = 0; for (const a of sorted) { acc += a.g; if (acc >= 0.5 * gSum) { t0Ns = a.tNs; break; } }
+    }
+    return { hr, dtNs: dt * 1e9, losArrivals, tauRmsNs, t0Ns };
   }
 
   // ---------------------------------------------------------------- Wi-Fi 2,4 GHz (3GPP InF-SH + Middleton Class A)
@@ -401,6 +481,47 @@ const VLC = (() => {
     }
     return { avail: ok / nFad, gp: gpSum / nFad, los, emi, snrMeanDb: prx - (nTh + 10 * Math.log10(1 + Math.pow(10, emi / 10))) };
   }
+  function wifiSweepEmi(w, grid, indices, heavy, workers, sfNorm, emiList, seed = 31, nFad = 30) {
+    const ap = w.ap_pos, nTh = -174 + 10 * Math.log10(w.BW) + w.NF_dB;
+    const K = Math.pow(10, w.K_los_dB / 10), s = Math.sqrt(K / (K + 1)), sg = Math.sqrt(1 / (2 * (K + 1)));
+    const bwRatio = w.BW / w.Rb_target, m = indices.length, r = rng(seed);
+    // Precomputar muestras térmicas Eb/N0 por punto (independientes de la EMI)
+    const g0All = new Float64Array(m * nFad);
+    for (let idx = 0; idx < m; idx++) {
+      const i = indices[idx], x = grid.pts[3 * i], y = grid.pts[3 * i + 1], z = grid.pts[3 * i + 2];
+      const d3 = Math.max(Math.hypot(x - ap[0], y - ap[1], z - ap[2]), 1);
+      const los = !(heavy.length && segBlocked(x, y, z, ap[0], ap[1], ap[2], heavy));
+      const body = workers.length && segBlocked(x, y, z, ap[0], ap[1], ap[2], workers) ? w.body_loss_dB : 0;
+      const plL = 31.84 + 21.5 * Math.log10(d3) + 19.0 * Math.log10(w.fc_GHz);
+      const plN = Math.max(32.4 + 23.0 * Math.log10(d3) + 20.0 * Math.log10(w.fc_GHz), plL);
+      const prx = w.Pt_dBm + 2 * w.G_ant_dBi - (los ? plL : plN) - (los ? w.sigma_los : w.sigma_nlos) * sfNorm[i] - body;
+      const baseOff = idx * nFad;
+      for (let f = 0; f < nFad; f++) {
+        let pw;
+        if (los) { const a = s + sg * r.normal(), b = sg * r.normal(); pw = a * a + b * b; }
+        else { const a = r.normal() / Math.SQRT2, b = r.normal() / Math.SQRT2; pw = a * a + b * b; }
+        g0All[baseOff + f] = Math.pow(10, (prx + 10 * Math.log10(Math.max(pw, 1e-30)) - nTh) / 10) * bwRatio;
+      }
+    }
+    const covRaw = [], covFec = [];
+    for (const emi of emiList) {
+      let okRaw = 0, okFec = 0;
+      for (let idx = 0; idx < m; idx++) {
+        let cR = 0, cF = 0;
+        const baseOff = idx * nFad;
+        for (let f = 0; f < nFad; f++) {
+          const bp = middletonBer(g0All[baseOff + f], emi, w.emi_A);
+          if (bp <= 1e-6) cR++;
+          if (rsPostFecBer(bp) <= 1e-6) cF++;
+        }
+        if (cR / nFad >= 0.99) okRaw++;
+        if (cF / nFad >= 0.99) okFec++;
+      }
+      covRaw.push(100 * okRaw / m);
+      covFec.push(100 * okFec / m);
+    }
+    return { covRaw, covFec };
+  }
   const wifiPcomm = (w) => w.P_ap_W + w.P_rx_wifi_W;
 
   // ---------------------------------------------------------------- iluminancia (EN 12464-1)
@@ -426,8 +547,9 @@ const VLC = (() => {
   }
 
   return { qfunc, rsPostFecBer, goodputMbps, hgFovFraction, ledBwEff, defaults, optimizedGrid, D, STATIC, STATIC_BOXES,
-    EMI_SOURCES, rng, randomDynamic, segBlocked, insideAny, receiverGrid, walls, branches, losChannel, reflections,
-    eyeTerms, eyeBer, pointPerf, evaluateVLC, wifiDefaults, wifiPoint, wifiPcomm, emiAt, middletonBer, illuminance,
+    EMI_SOURCES, rng, randomDynamic, segBlocked, insideAny, receiverGrid, walls, branches, losChannel, losGrid,
+    reflections, noiseBreakdown, eyeTerms, eyeBer, pointPerf, evaluateFromLos, evaluateVLC, rmsDelaySpreadPoint,
+    pointImpulse, wifiDefaults, wifiPoint, wifiSweepEmi, wifiPcomm, emiAt, middletonBer, illuminance,
     GRID3, GRID4 };
 })();
 if (typeof module !== "undefined") module.exports = VLC;

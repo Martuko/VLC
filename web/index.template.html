@@ -55,6 +55,7 @@ button, input, select { font: inherit; color: inherit; }
 .mode button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
 .mode button[data-mode="wifi"][aria-pressed="true"] { background: var(--rf); color: #fff; }
 .iconbtn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.iconbtn[aria-expanded="true"] { background: var(--ok); color: #fff; border-color: var(--ok); font-weight: 600; }
 
 .controls, .metrics { overflow-y: auto; background: var(--panel); padding: 6px 16px 24px; }
 .controls { grid-area: ctl; border-right: 1px solid var(--line); }
@@ -82,7 +83,38 @@ input[type="range"] { width: 100%; accent-color: var(--ok); margin: 4px 0 0; }
 .btn-main:disabled { opacity: 0.55; cursor: progress; }
 .note { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
 
-.stage { grid-area: stage; position: relative; min-height: 0; overflow: hidden; background: var(--scene-bg); }
+.center-col { grid-area: stage; display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; }
+.stage { flex: 1 1 auto; position: relative; min-height: 170px; overflow: hidden; background: var(--scene-bg); }
+.resizer { height: 7px; flex: 0 0 auto; background: var(--panel-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  cursor: ns-resize; position: relative; touch-action: none; }
+.resizer::after { content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 38px; height: 3px; border-radius: 99px; background: var(--muted); opacity: 0.45; }
+.resizer:hover::after, .resizer.drag::after { opacity: 0.9; background: var(--ok); }
+.charts-drawer { flex: 0 0 auto; height: 42%; min-height: 200px; max-height: 74%; display: flex; flex-direction: column;
+  background: var(--panel); overflow: hidden; }
+.charts-drawer[hidden], .resizer[hidden] { display: none; }
+.charts-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--line);
+  background: var(--panel-2); flex: 0 0 auto; min-width: 0; }
+.ctabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; flex: 1 1 auto; min-width: 0; }
+.ctabs button { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 3px 9px;
+  font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.ctabs button:hover { border-color: var(--ink); }
+.ctabs button[aria-selected="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); font-weight: 600; }
+.charts-act { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.charts-act .mini-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 3px 9px;
+  font-size: 12px; cursor: pointer; white-space: nowrap; }
+.charts-act .mini-btn.pri { background: var(--ok); color: #fff; border-color: var(--ok); font-weight: 600; }
+.charts-act .mini-btn:disabled { opacity: 0.55; cursor: progress; }
+.charts-act .close-btn { border: 1px solid var(--line); background: transparent; border-radius: 6px; width: 26px; height: 26px;
+  line-height: 1; font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.charts-body { position: relative; flex: 1 1 auto; min-height: 0; padding: 8px 10px; display: flex; flex-direction: column; }
+.charts-grid { flex: 1 1 auto; min-height: 0; display: grid; gap: 10px; grid-template-columns: 1fr; }
+.charts-grid[data-cols="2"] { grid-template-columns: 1fr 1fr; }
+.chart-cv { width: 100%; height: 100%; min-height: 0; display: block; border-radius: 6px; }
+.chart-tip { position: absolute; pointer-events: none; z-index: 6; background: color-mix(in srgb, var(--ink) 92%, transparent);
+  color: var(--panel); border-radius: 6px; padding: 5px 8px; font-size: 12px; line-height: 1.35; box-shadow: 0 3px 10px rgba(0,0,0,0.22); }
+.charts-mcbar { height: 4px; background: var(--panel-2); border-radius: 2px; overflow: hidden; margin-bottom: 6px; flex: 0 0 auto; }
+.charts-mcbar > div { height: 100%; width: 0; background: var(--ok); }
 #viewport { position: absolute; inset: 0; }
 #viewport canvas { display: block; touch-action: none; }
 .overlay { position: absolute; pointer-events: none; }
@@ -121,8 +153,13 @@ dialog h2 { margin-top: 0; font-size: 24px; }
 dialog p, dialog li { font-size: 14.5px; max-width: 70ch; }
 
 @media (max-width: 980px) {
-  .app { height: auto; min-height: 100%; grid-template-columns: 1fr; grid-template-rows: auto 56vh auto auto;
+  .app { height: auto; min-height: 100%; grid-template-columns: 1fr; grid-template-rows: auto auto auto auto;
     grid-template-areas: "top" "stage" "met" "ctl"; }
+  .center-col { overflow: visible; }
+  .stage { height: 54vh; min-height: 280px; }
+  .resizer { display: none !important; }
+  .charts-drawer { height: 380px; max-height: none; border-top: 1px solid var(--line); }
+  .charts-grid[data-cols="2"] { grid-template-columns: 1fr; }
   .controls, .metrics { border: 0; border-top: 1px solid var(--line); overflow: visible; }
   .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
   body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
@@ -138,6 +175,7 @@ dialog p, dialog li { font-size: 14.5px; max-width: 70ch; }
       <button type="button" data-mode="vlc" aria-pressed="true">Luz visible (VLC)</button>
       <button type="button" data-mode="wifi" aria-pressed="false">Wi-Fi 2,4 GHz</button>
     </div>
+    <button type="button" class="iconbtn" id="btnCharts" aria-expanded="false" aria-controls="chartsDrawer">Gráficos</button>
     <button type="button" class="iconbtn" id="btnHelp">Cómo funciona</button>
   </header>
 
@@ -213,12 +251,40 @@ dialog p, dialog li { font-size: 14.5px; max-width: 70ch; }
     </section>
   </aside>
 
-  <main class="stage" aria-label="Vista 3D de la nave">
-    <div id="viewport"></div>
-    <div class="overlay hint" id="hint">Arrastra el AGV o haz clic en el piso para moverlo</div>
-    <div class="overlay busy" id="busy" role="status" aria-live="polite">Calculando…</div>
-    <div class="overlay legend" id="legend"></div>
-  </main>
+  <div class="center-col" id="centerCol">
+    <main class="stage" aria-label="Vista 3D de la nave">
+      <div id="viewport"></div>
+      <div class="overlay hint" id="hint">Arrastra el AGV o haz clic en el piso para moverlo</div>
+      <div class="overlay busy" id="busy" role="status" aria-live="polite">Calculando…</div>
+      <div class="overlay legend" id="legend"></div>
+    </main>
+    <div class="resizer" id="chartsResizer" hidden role="separator" aria-orientation="horizontal" title="Arrastra para ajustar altura"></div>
+    <section class="charts-drawer" id="chartsDrawer" hidden aria-label="Gráficos dinámicos de los experimentos E2 a E11">
+      <div class="charts-head">
+        <div class="ctabs" id="chartTabs" role="tablist">
+          <button type="button" role="tab" data-tab="e2" aria-selected="false">E2 Impulso</button>
+          <button type="button" role="tab" data-tab="e3" aria-selected="false">E3 CDF</button>
+          <button type="button" role="tab" data-tab="e4" aria-selected="true">E4 Polvo</button>
+          <button type="button" role="tab" data-tab="e5" aria-selected="false">E5 Suciedad</button>
+          <button type="button" role="tab" data-tab="e6" aria-selected="false">E6 Calor</button>
+          <button type="button" role="tab" data-tab="e7" aria-selected="false">E7 Tasa</button>
+          <button type="button" role="tab" data-tab="e9" aria-selected="false">E9 Wi-Fi</button>
+          <button type="button" role="tab" data-tab="e11" aria-selected="false">E11 Efic.</button>
+          <button type="button" role="tab" data-tab="e8e10" aria-selected="false">E8/E10</button>
+        </div>
+        <div class="charts-act">
+          <button type="button" class="mini-btn pri" id="btnTabMC" hidden>Monte Carlo (E8/E10)</button>
+          <button type="button" class="mini-btn" id="btnTabMCReset" hidden>Vista instantánea</button>
+          <button type="button" class="close-btn" id="btnChartsClose" title="Ocultar gráficos" aria-label="Ocultar gráficos">×</button>
+        </div>
+      </div>
+      <div class="charts-body">
+        <div class="charts-mcbar" id="tabMcProg" hidden><div></div></div>
+        <div class="charts-grid" id="chartsHost" data-cols="2"></div>
+        <div class="chart-tip" id="chartTip" hidden></div>
+      </div>
+    </section>
+  </div>
 
   <aside class="metrics" aria-label="Resultados">
     <section class="metric">
@@ -273,6 +339,7 @@ dialog p, dialog li { font-size: 14.5px; max-width: 70ch; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 /*__PHYSICS__*/
+/*__CHARTS__*/
 </script>
 <script>
 (() => {
@@ -296,6 +363,7 @@ const S = {
   mode: "vlc", vis: 0, days: 0, temp: 25, ibg: 1000, workers: 0, rate: 10, grid: 3, rx: "pd", fov: 60, led: 15,
   blue: false, fec: false, emi: 0, pled: 1, pap: 12, seed: 7,
   agv: [6.25, 6.25], mc: null, fl: null,
+  chartsOpen: false, chartTab: "e4", mcTab: null,
 };
 const PRESETS = {
   s0: { vis: 0, days: 0, temp: 25, ibg: 1000, workers: 0, fl: null },
@@ -328,10 +396,24 @@ function buildParams() {
 function wifiParams() { return Object.assign(VLC.wifiDefaults(), { use_fec: S.fec, Rb_target: S.rate * 1e6, emi_scale_dB: S.emi, P_ap_W: S.pap }); }
 
 const reflCache = new Map();
-function getRefl(p) {
-  const key = `${S.grid}|${S.rx}|${S.rx === "pd" ? S.fov : 45}`;
+function getReflFor(p) {
+  const gN = p.led_xy.length === 16 ? 4 : 3;
+  const rxK = p.adr_enabled ? "adr" : "pd";
+  const key = `${gN}|${rxK}|${p.adr_enabled ? p.adr_fov_deg : p.fov_deg}`;
   if (!reflCache.has(key)) reflCache.set(key, VLC.reflections(p, grid, VLC.STATIC_BOXES, VLC.branches(p)));
   return reflCache.get(key);
+}
+function getRefl(p) { return getReflFor(p); }
+const losCache = new Map();
+function getLosFor(p) {
+  const gN = p.led_xy.length === 16 ? 4 : 3;
+  const rxK = p.adr_enabled ? "adr" : "pd";
+  const key = `${gN}|${rxK}|${p.adr_enabled ? p.adr_fov_deg : p.fov_deg}|${S.workers}|${forklifts(S.workers)}|${S.seed}`;
+  if (!losCache.has(key)) {
+    if (losCache.size >= 8) losCache.clear();
+    losCache.set(key, VLC.losGrid(p, grid, VLC.STATIC_BOXES.concat(dyn), VLC.branches(p)));
+  }
+  return losCache.get(key);
 }
 const illumCache = new Map();
 function getIllum(p) {
@@ -545,7 +627,8 @@ function freeMask() {
 function compute() {
   const p = buildParams(), w = wifiParams();
   const refl = getRefl(p), boxes = VLC.STATIC_BOXES.concat(dyn);
-  const vlc = VLC.evaluateVLC(p, grid, boxes, refl);
+  const losAll = getLosFor(p);
+  const vlc = VLC.evaluateFromLos(p, grid, losAll, refl);
   const heavy = VLC.STATIC_BOXES.filter((b) => b[4] >= 2).concat(dyn.filter((b) => b[4] >= 2));
   const workersB = dyn.filter((b) => b[4] < 2);
   const r = VLC.rng(11 + S.seed), wa = new Float32Array(grid.n), wg = new Float32Array(grid.n), we = new Float32Array(grid.n);
@@ -554,14 +637,15 @@ function compute() {
     wa[i] = o.avail; wg[i] = o.gp; we[i] = o.emi;
   }
   const free = freeMask();
+  const freeIdx = [];
   let n = 0, cv = 0, gv = 0, cw = 0, gw = 0; const snrs = [];
   for (let i = 0; i < grid.n; i++) {
-    if (!free[i]) continue; n++;
+    if (!free[i]) continue; freeIdx.push(i); n++;
     if (vlc.ber[i] <= 1e-6) cv++; gv += vlc.gp[i]; snrs.push(vlc.snr[i]);
     if (wa[i] >= 0.99) cw++; gw += wg[i];
   }
   snrs.sort((a, b) => a - b);
-  last = { p, w, refl, vlc, wa, wg, we, free, covV: 100 * cv / n, covW: 100 * cw / n, gpV: gv / n, gpW: gw / n, snrMed: snrs[snrs.length >> 1] };
+  last = { p, w, refl, losAll, boxes, heavy, workersB, vlc, wa, wg, we, free, freeIdx, covV: 100 * cv / n, covW: 100 * cw / n, gpV: gv / n, gpW: gw / n, snrMed: snrs[snrs.length >> 1] };
   render();
 }
 function render() {
@@ -606,12 +690,15 @@ function render() {
   dust.material.opacity = $("lyDust").checked && Number.isFinite(vis) ? Math.min(0.85, 2.2 / vis + 0.05) : 0;
   scene.fog = Number.isFinite(vis) ? new THREE.FogExp2(scene.background.getHex(), Math.min(0.09, 0.4 / vis)) : null;
   if (ovenMesh) ovenMesh.material.emissiveIntensity = Math.max(0, Math.min(1, (S.temp - 30) / 55));
-  updateProbe();
+  last.p = buildParams();
+  last.w = wifiParams();
+  updateProbe(true);
+  scheduleCharts();
 }
 
 // sonda del AGV
-let probeTimer = 0;
-function updateProbe() {
+let probeTimer = 0, lastProbe = null;
+function updateProbe(fromRender = false) {
   if (!last) return;
   const [x, y] = S.agv, z = 1;
   agv.position.copy(P3(x, y, 0));
@@ -619,6 +706,7 @@ function updateProbe() {
   const one = { pts: new Float64Array([x, y, z]), n: 1 };
   const refl = VLC.reflections(p, one, VLC.STATIC_BOXES, brs);
   const los = VLC.losChannel(p, x, y, z, boxes, brs);
+  lastProbe = { los, refl };
   const r = VLC.pointPerf(p, brs, los, refl, 0);
   // rayos
   rayGroup.clear();
@@ -645,6 +733,7 @@ function updateProbe() {
     <dt>Wi-Fi: trayecto al AP</dt><dd>${wo.los ? "despejado" : "obstruido por máquinas"}</dd>
     <dt>Wi-Fi: interferencia local</dt><dd>${fmt(wo.emi, 0)} dB sobre el ruido</dd>
     <dt>Wi-Fi: disponibilidad</dt><dd class="${wo.avail >= 0.99 ? "pass" : "failc"}">${fmt(100 * wo.avail, 1)} %</dd>`;
+  if (!fromRender && S.chartsOpen && (S.chartTab === "e2" || S.chartTab === "e6")) scheduleCharts(true);
 }
 
 // Monte Carlo
@@ -694,6 +783,184 @@ function runMC() {
 }
 function invalidateMC() {
   if (S.mc) { S.mc = null; $("mcOut").innerHTML = `<dt>Resultado anterior</dt><dd>descartado: cambiaste la configuración</dd>`; }
+  if (S.mcTab) { S.mcTab = null; syncChartButtons(); }
+}
+
+// ------------------------------------------------------------------ panel de gráficos dinámicos (E2–E11)
+let chartTimer = 0, lastChartData = null, tabMcRunning = false;
+function syncChartButtons() {
+  const isMcTab = S.chartTab === "e8e10";
+  $("btnTabMC").hidden = !isMcTab;
+  $("btnTabMCReset").hidden = !(isMcTab && S.mcTab && S.mcTab.valid);
+}
+function toggleCharts(open) {
+  S.chartsOpen = open;
+  $("btnCharts").setAttribute("aria-expanded", String(open));
+  $("chartsDrawer").hidden = !open;
+  $("chartsResizer").hidden = !open;
+  syncChartButtons();
+  requestAnimationFrame(() => {
+    resize();
+    if (open) scheduleCharts(true);
+  });
+}
+function renderChartsNow() {
+  if (!S.chartsOpen || !last) return;
+  const evalConfigInstant = (pCfg, idxList) => VLC.evaluateFromLos(pCfg, grid, getLosFor(pCfg), getReflFor(pCfg), idxList);
+  const ctx = {
+    V: VLC, p: last.p, w: last.w, grid, last,
+    freeIdx: last.freeIdx, boxes: last.boxes, heavy: last.heavy, workersB: last.workersB,
+    losAll: last.losAll, refl: last.refl, sfNorm, seed: S.seed, workers: S.workers,
+    agv: S.agv, probeLos: lastProbe ? lastProbe.los : null, probeRefl: lastProbe ? lastProbe.refl : null,
+    mcTab: S.mcTab, evalConfigInstant,
+  };
+  lastChartData = VLCCharts.computeTabData(S.chartTab, ctx);
+  VLCCharts.renderPanels($("chartsHost"), $("chartTip"), lastChartData);
+  syncChartButtons();
+}
+function scheduleCharts(immediate = false) {
+  if (!S.chartsOpen || !last) return;
+  clearTimeout(chartTimer);
+  if (immediate) { requestAnimationFrame(renderChartsNow); return; }
+  chartTimer = setTimeout(() => requestAnimationFrame(renderChartsNow), 45);
+}
+function runChartsMC() {
+  if (tabMcRunning || !last) return;
+  tabMcRunning = true;
+  const btn = $("btnTabMC"), prog = $("tabMcProg"), bar = prog.firstElementChild;
+  btn.disabled = true; btn.textContent = "Calculando MC…";
+  prog.hidden = false; bar.style.width = "0%";
+
+  const pCur = buildParams(), wCur = wifiParams();
+  const baseIdx = [];
+  for (let i = 0; i < grid.n; i++) if (!staticMask[i] && grid.pts[3 * i + 1] <= 13.2) baseIdx.push(i);
+  const mcIdx = VLCCharts.sampleIndices(baseIdx, 100);
+  const subGrid = { pts: new Float64Array(mcIdx.length * 3), n: mcIdx.length };
+  mcIdx.forEach((gi, k) => { subGrid.pts[3 * k] = grid.pts[3 * gi]; subGrid.pts[3 * k + 1] = grid.pts[3 * gi + 1]; subGrid.pts[3 * k + 2] = pCur.z_rx; });
+
+  // Configuraciones E8 (5 curvas) y E10 (ablación)
+  const p60 = Object.assign(VLC.defaults(), { visibility: pCur.visibility, days_dirty: pCur.days_dirty, T_amb: pCur.T_amb, I_bg: pCur.I_bg, Rb: pCur.Rb, fov_deg: 60 });
+  const p80 = Object.assign({}, p60, { fov_deg: 80 });
+  const pAdr9 = Object.assign({}, p60, { adr_enabled: true });
+  const pBase10 = Object.assign({}, p60);
+  const pFilt10 = Object.assign({}, pBase10, { use_blue_filter: true, days_dirty: Math.min(pBase10.days_dirty, 7) });
+  const pFec10 = Object.assign({}, pFilt10, { use_fec: true });
+  const pAdr16 = Object.assign(VLC.optimizedGrid(pFec10), { adr_enabled: true });
+  const wFec = Object.assign({}, wCur, { use_fec: true });
+
+  const r60 = VLC.reflections(p60, subGrid, VLC.STATIC_BOXES, VLC.branches(p60));
+  const r80 = VLC.reflections(p80, subGrid, VLC.STATIC_BOXES, VLC.branches(p80));
+  const rA9 = VLC.reflections(pAdr9, subGrid, VLC.STATIC_BOXES, VLC.branches(pAdr9));
+  const rA16 = VLC.reflections(pAdr16, subGrid, VLC.STATIC_BOXES, VLC.branches(pAdr16));
+
+  const wLevels = [0, 10, 20, 30, 40], N_RUNS = 35, totalSteps = (wLevels.length + 1) * N_RUNS;
+  const e8Keys = ["pd60", "pd80", "adr9", "wifi", "hyb"];
+  const e8Res = { pd60: [], pd80: [], adr9: [], wifi: [], hyb: [] };
+  const e10Ok = [0, 0, 0, 0, 0, 0].map(() => new Float32Array(subGrid.n));
+  const e10Cnt = new Float32Array(subGrid.n);
+  const nw10 = S.workers > 0 ? S.workers : 12;
+  const rDyn = VLC.rng(3000 + S.seed), rWf = VLC.rng(4000 + S.seed);
+
+  let phase = 0, run = 0, doneSteps = 0;
+  let curOk = null, curCnt = null;
+  const initPhase = () => {
+    curOk = {}; e8Keys.forEach((k) => { curOk[k] = new Float32Array(subGrid.n); });
+    curCnt = new Float32Array(subGrid.n);
+  };
+  initPhase();
+
+  const tick = () => {
+    const t0 = performance.now();
+    while (performance.now() - t0 < 36) {
+      if (phase < wLevels.length) {
+        const nw = wLevels[phase];
+        const d = VLC.randomDynamic(rDyn, nw, Math.floor(nw / 10), VLC.defaults());
+        const bx = VLC.STATIC_BOXES.concat(d);
+        const hv = VLC.STATIC_BOXES.filter((b) => b[4] >= 2).concat(d.filter((b) => b[4] >= 2));
+        const wk = d.filter((b) => b[4] < 2);
+        const v60 = VLC.evaluateVLC(p60, subGrid, bx, r60);
+        const v80 = VLC.evaluateVLC(p80, subGrid, bx, r80);
+        const vA9 = VLC.evaluateVLC(pAdr9, subGrid, bx, rA9);
+        for (let i = 0; i < subGrid.n; i++) {
+          if (VLC.insideAny(subGrid.pts[3 * i], subGrid.pts[3 * i + 1], d)) continue;
+          curCnt[i]++;
+          if (v60.ber[i] <= 1e-6) curOk.pd60[i]++;
+          if (v80.ber[i] <= 1e-6) curOk.pd80[i]++;
+          const a9 = vA9.ber[i] <= 1e-6;
+          if (a9) curOk.adr9[i]++;
+          const wo = VLC.wifiPoint(wCur, subGrid.pts[3 * i], subGrid.pts[3 * i + 1], 1, hv, wk, sfNorm[mcIdx[i]], rWf, 1);
+          const wg = wo.avail >= 1;
+          if (wg) curOk.wifi[i]++;
+          if (a9 || wg) curOk.hyb[i]++;
+        }
+        run++; doneSteps++;
+        if (run >= N_RUNS) {
+          for (const k of e8Keys) {
+            let n = 0, good = 0;
+            for (let i = 0; i < subGrid.n; i++) if (curCnt[i] > 0) { n++; if (curOk[k][i] / curCnt[i] >= 0.99) good++; }
+            e8Res[k].push(100 * good / Math.max(n, 1));
+          }
+          phase++; run = 0; initPhase();
+        }
+      } else if (phase === wLevels.length) {
+        const d = VLC.randomDynamic(rDyn, nw10, forklifts(nw10), VLC.defaults());
+        const bx = VLC.STATIC_BOXES.concat(d);
+        const hv = VLC.STATIC_BOXES.filter((b) => b[4] >= 2).concat(d.filter((b) => b[4] >= 2));
+        const wk = d.filter((b) => b[4] < 2);
+        const losB = VLC.losGrid(pBase10, subGrid, bx, VLC.branches(pBase10));
+        const vB = VLC.evaluateFromLos(pBase10, subGrid, losB, r60);
+        const vF = VLC.evaluateFromLos(pFilt10, subGrid, losB, r60);
+        const vC = VLC.evaluateFromLos(pFec10, subGrid, losB, r60);
+        const vA = VLC.evaluateVLC(pAdr16, subGrid, bx, rA16);
+        for (let i = 0; i < subGrid.n; i++) {
+          if (VLC.insideAny(subGrid.pts[3 * i], subGrid.pts[3 * i + 1], d)) continue;
+          e10Cnt[i]++;
+          if (vB.ber[i] <= 1e-6) e10Ok[0][i]++;
+          if (vF.ber[i] <= 1e-6) e10Ok[1][i]++;
+          if (vC.ber[i] <= 1e-6) e10Ok[2][i]++;
+          const aOk = vA.ber[i] <= 1e-6;
+          if (aOk) e10Ok[3][i]++;
+          const wo = VLC.wifiPoint(wFec, subGrid.pts[3 * i], subGrid.pts[3 * i + 1], 1, hv, wk, sfNorm[mcIdx[i]], rWf, 1);
+          const wOk = wo.avail >= 1;
+          if (wOk) e10Ok[4][i]++;
+          if (aOk || wOk) e10Ok[5][i]++;
+        }
+        run++; doneSteps++;
+        if (run >= N_RUNS) { phase++; break; }
+      } else break;
+    }
+    bar.style.width = `${Math.min(100, 100 * doneSteps / totalSteps)}%`;
+    if (phase <= wLevels.length) { setTimeout(tick, 0); return; }
+
+    const e10Pct = e10Ok.map((arr) => {
+      let n = 0, good = 0;
+      for (let i = 0; i < subGrid.n; i++) if (e10Cnt[i] > 0) { n++; if (arr[i] / e10Cnt[i] >= 0.99) good++; }
+      return 100 * good / Math.max(n, 1);
+    });
+    S.mcTab = {
+      valid: true, nRuns: N_RUNS, nw10,
+      e8Series: [
+        { label: "1-PD FOV 60°", xs: wLevels, ys: e8Res.pd60, color: "blue", width: 2, dots: true },
+        { label: "1-PD FOV 80°", xs: wLevels, ys: e8Res.pd80, color: "ok", width: 2.2, dots: true },
+        { label: "ADR 5 ramas", xs: wLevels, ys: e8Res.adr9, color: "hivis", width: 2, dashed: true, dots: true },
+        { label: "Wi-Fi (EMI)", xs: wLevels, ys: e8Res.wifi, color: "rf", width: 2, dashed: true, dots: true },
+        { label: "Híbrido", xs: wLevels, ys: e8Res.hyb, color: "ink", width: 2.3, dots: true },
+      ],
+      e10Bars: [
+        { label: "1. Base\n3×3", value: e10Pct[0], color: "fail" },
+        { label: "2. +Filtro\n+≤7 d", value: e10Pct[1], color: "hivis" },
+        { label: "3. +RS\nFEC", value: e10Pct[2], color: "safety" },
+        { label: "4. +ADR\n4×4", value: e10Pct[3], color: "ok" },
+        { label: "5. Wi-Fi\n+FEC", value: e10Pct[4], color: "rf" },
+        { label: "6. Híbrido\nVLC+RF", value: e10Pct[5], color: "blue" },
+      ],
+    };
+    tabMcRunning = false;
+    btn.disabled = false; btn.textContent = "Monte Carlo (E8/E10)";
+    prog.hidden = true;
+    renderChartsNow();
+  };
+  setTimeout(tick, 15);
 }
 
 // ------------------------------------------------------------------ interfaz
@@ -765,6 +1032,39 @@ $("lyCones").addEventListener("change", (e) => { coneGroup.visible = e.target.ch
 $("lyLabels").addEventListener("change", (e) => { labels.visible = e.target.checked; });
 $("btnMC").addEventListener("click", runMC);
 $("btnHelp").addEventListener("click", () => $("help").showModal());
+$("btnCharts").addEventListener("click", () => toggleCharts(!S.chartsOpen));
+$("btnChartsClose").addEventListener("click", () => toggleCharts(false));
+$("chartTabs").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  S.chartTab = b.dataset.tab;
+  $("chartTabs").querySelectorAll("button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+  syncChartButtons();
+  scheduleCharts(true);
+});
+$("btnTabMC").addEventListener("click", runChartsMC);
+$("btnTabMCReset").addEventListener("click", () => { S.mcTab = null; syncChartButtons(); scheduleCharts(true); });
+
+// separador arrastrable entre escena 3D y panel de gráficos
+(() => {
+  const rz = $("chartsResizer"), dr = $("chartsDrawer"), col = $("centerCol");
+  let active = false;
+  rz.addEventListener("pointerdown", (ev) => {
+    active = true; rz.classList.add("drag"); rz.setPointerCapture(ev.pointerId);
+  });
+  rz.addEventListener("pointermove", (ev) => {
+    if (!active) return;
+    const rect = col.getBoundingClientRect();
+    const h = Math.min(Math.max(rect.bottom - ev.clientY, 200), rect.height * 0.74);
+    dr.style.height = Math.round(h) + "px";
+  });
+  const stop = () => { if (active) { active = false; rz.classList.remove("drag"); } };
+  rz.addEventListener("pointerup", stop);
+  rz.addEventListener("pointercancel", stop);
+})();
+
+new ResizeObserver(() => {
+  if (S.chartsOpen && lastChartData) VLCCharts.renderPanels($("chartsHost"), $("chartTip"), lastChartData);
+}).observe($("chartsHost"));
 
 // arrastre del AGV
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);

@@ -55,6 +55,7 @@ button, input, select { font: inherit; color: inherit; }
 .mode button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
 .mode button[data-mode="wifi"][aria-pressed="true"] { background: var(--rf); color: #fff; }
 .iconbtn { border: 1px solid var(--line); background: var(--panel-2); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.iconbtn[aria-expanded="true"] { background: var(--ok); color: #fff; border-color: var(--ok); font-weight: 600; }
 
 .controls, .metrics { overflow-y: auto; background: var(--panel); padding: 6px 16px 24px; }
 .controls { grid-area: ctl; border-right: 1px solid var(--line); }
@@ -82,7 +83,38 @@ input[type="range"] { width: 100%; accent-color: var(--ok); margin: 4px 0 0; }
 .btn-main:disabled { opacity: 0.55; cursor: progress; }
 .note { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
 
-.stage { grid-area: stage; position: relative; min-height: 0; overflow: hidden; background: var(--scene-bg); }
+.center-col { grid-area: stage; display: flex; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden; }
+.stage { flex: 1 1 auto; position: relative; min-height: 170px; overflow: hidden; background: var(--scene-bg); }
+.resizer { height: 7px; flex: 0 0 auto; background: var(--panel-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  cursor: ns-resize; position: relative; touch-action: none; }
+.resizer::after { content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 38px; height: 3px; border-radius: 99px; background: var(--muted); opacity: 0.45; }
+.resizer:hover::after, .resizer.drag::after { opacity: 0.9; background: var(--ok); }
+.charts-drawer { flex: 0 0 auto; height: 42%; min-height: 200px; max-height: 74%; display: flex; flex-direction: column;
+  background: var(--panel); overflow: hidden; }
+.charts-drawer[hidden], .resizer[hidden] { display: none; }
+.charts-head { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--line);
+  background: var(--panel-2); flex: 0 0 auto; min-width: 0; }
+.ctabs { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: thin; flex: 1 1 auto; min-width: 0; }
+.ctabs button { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 3px 9px;
+  font-size: 12.5px; cursor: pointer; white-space: nowrap; }
+.ctabs button:hover { border-color: var(--ink); }
+.ctabs button[aria-selected="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); font-weight: 600; }
+.charts-act { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.charts-act .mini-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 3px 9px;
+  font-size: 12px; cursor: pointer; white-space: nowrap; }
+.charts-act .mini-btn.pri { background: var(--ok); color: #fff; border-color: var(--ok); font-weight: 600; }
+.charts-act .mini-btn:disabled { opacity: 0.55; cursor: progress; }
+.charts-act .close-btn { border: 1px solid var(--line); background: transparent; border-radius: 6px; width: 26px; height: 26px;
+  line-height: 1; font-size: 16px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.charts-body { position: relative; flex: 1 1 auto; min-height: 0; padding: 8px 10px; display: flex; flex-direction: column; }
+.charts-grid { flex: 1 1 auto; min-height: 0; display: grid; gap: 10px; grid-template-columns: 1fr; }
+.charts-grid[data-cols="2"] { grid-template-columns: 1fr 1fr; }
+.chart-cv { width: 100%; height: 100%; min-height: 0; display: block; border-radius: 6px; }
+.chart-tip { position: absolute; pointer-events: none; z-index: 6; background: color-mix(in srgb, var(--ink) 92%, transparent);
+  color: var(--panel); border-radius: 6px; padding: 5px 8px; font-size: 12px; line-height: 1.35; box-shadow: 0 3px 10px rgba(0,0,0,0.22); }
+.charts-mcbar { height: 4px; background: var(--panel-2); border-radius: 2px; overflow: hidden; margin-bottom: 6px; flex: 0 0 auto; }
+.charts-mcbar > div { height: 100%; width: 0; background: var(--ok); }
 #viewport { position: absolute; inset: 0; }
 #viewport canvas { display: block; touch-action: none; }
 .overlay { position: absolute; pointer-events: none; }
@@ -121,8 +153,13 @@ dialog h2 { margin-top: 0; font-size: 24px; }
 dialog p, dialog li { font-size: 14.5px; max-width: 70ch; }
 
 @media (max-width: 980px) {
-  .app { height: auto; min-height: 100%; grid-template-columns: 1fr; grid-template-rows: auto 56vh auto auto;
+  .app { height: auto; min-height: 100%; grid-template-columns: 1fr; grid-template-rows: auto auto auto auto;
     grid-template-areas: "top" "stage" "met" "ctl"; }
+  .center-col { overflow: visible; }
+  .stage { height: 54vh; min-height: 280px; }
+  .resizer { display: none !important; }
+  .charts-drawer { height: 380px; max-height: none; border-top: 1px solid var(--line); }
+  .charts-grid[data-cols="2"] { grid-template-columns: 1fr; }
   .controls, .metrics { border: 0; border-top: 1px solid var(--line); overflow: visible; }
   .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; }
   body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
@@ -138,6 +175,7 @@ dialog p, dialog li { font-size: 14.5px; max-width: 70ch; }
       <button type="button" data-mode="vlc" aria-pressed="true">Luz visible (VLC)</button>
       <button type="button" data-mode="wifi" aria-pressed="false">Wi-Fi 2,4 GHz</button>
     </div>
+    <button type="button" class="iconbtn" id="btnCharts" aria-expanded="false" aria-controls="chartsDrawer">Gráficos</button>
     <button type="button" class="iconbtn" id="btnHelp">Cómo funciona</button>
   </header>
 
@@ -213,12 +251,40 @@ dialog p, dialog li { font-size: 14.5px; max-width: 70ch; }
     </section>
   </aside>
 
-  <main class="stage" aria-label="Vista 3D de la nave">
-    <div id="viewport"></div>
-    <div class="overlay hint" id="hint">Arrastra el AGV o haz clic en el piso para moverlo</div>
-    <div class="overlay busy" id="busy" role="status" aria-live="polite">Calculando…</div>
-    <div class="overlay legend" id="legend"></div>
-  </main>
+  <div class="center-col" id="centerCol">
+    <main class="stage" aria-label="Vista 3D de la nave">
+      <div id="viewport"></div>
+      <div class="overlay hint" id="hint">Arrastra el AGV o haz clic en el piso para moverlo</div>
+      <div class="overlay busy" id="busy" role="status" aria-live="polite">Calculando…</div>
+      <div class="overlay legend" id="legend"></div>
+    </main>
+    <div class="resizer" id="chartsResizer" hidden role="separator" aria-orientation="horizontal" title="Arrastra para ajustar altura"></div>
+    <section class="charts-drawer" id="chartsDrawer" hidden aria-label="Gráficos dinámicos de los experimentos E2 a E11">
+      <div class="charts-head">
+        <div class="ctabs" id="chartTabs" role="tablist">
+          <button type="button" role="tab" data-tab="e2" aria-selected="false">E2 Impulso</button>
+          <button type="button" role="tab" data-tab="e3" aria-selected="false">E3 CDF</button>
+          <button type="button" role="tab" data-tab="e4" aria-selected="true">E4 Polvo</button>
+          <button type="button" role="tab" data-tab="e5" aria-selected="false">E5 Suciedad</button>
+          <button type="button" role="tab" data-tab="e6" aria-selected="false">E6 Calor</button>
+          <button type="button" role="tab" data-tab="e7" aria-selected="false">E7 Tasa</button>
+          <button type="button" role="tab" data-tab="e9" aria-selected="false">E9 Wi-Fi</button>
+          <button type="button" role="tab" data-tab="e11" aria-selected="false">E11 Efic.</button>
+          <button type="button" role="tab" data-tab="e8e10" aria-selected="false">E8/E10</button>
+        </div>
+        <div class="charts-act">
+          <button type="button" class="mini-btn pri" id="btnTabMC" hidden>Monte Carlo (E8/E10)</button>
+          <button type="button" class="mini-btn" id="btnTabMCReset" hidden>Vista instantánea</button>
+          <button type="button" class="close-btn" id="btnChartsClose" title="Ocultar gráficos" aria-label="Ocultar gráficos">×</button>
+        </div>
+      </div>
+      <div class="charts-body">
+        <div class="charts-mcbar" id="tabMcProg" hidden><div></div></div>
+        <div class="charts-grid" id="chartsHost" data-cols="2"></div>
+        <div class="chart-tip" id="chartTip" hidden></div>
+      </div>
+    </section>
+  </div>
 
   <aside class="metrics" aria-label="Resultados">
     <section class="metric">
@@ -538,13 +604,18 @@ const VLC = (() => {
   }
 
   // ---------------------------------------------------------------- rendimiento (modelo de ojo)
-  function noiseVar(p, Pdc, A) {
+  function noiseBreakdown(p, Pdc, A) {
     const B = p.Rb, TK = p.T_amb + 273.15;
     const Idark = p.I_dark0 * (A / 1e-4) * Math.pow(2, (p.T_amb - 25) / 10);
-    const sShot = 2 * Q_E * p.resp * Pdc * B + 2 * Q_E * D.IbgEff(p, A) * p.I2 * B + 2 * Q_E * Idark * B;
+    const sShotSignalBg = 2 * Q_E * p.resp * Pdc * B + 2 * Q_E * D.IbgEff(p, A) * p.I2 * B;
+    const sDark = 2 * Q_E * Idark * B;
+    const sShot = sShotSignalBg + sDark;
     const Cc = p.eta_cap * A;
     const sTh = (8 * Math.PI * K_B * TK / p.G_ol) * Cc * p.I2 * B * B + (16 * Math.PI * Math.PI * K_B * TK * p.Gamma / p.g_m) * Cc * Cc * p.I3 * B * B * B;
-    return { sShot, sTh, v: sShot + sTh };
+    return { sShotSignalBg, sDark, sShot, sTh, v: sShot + sTh };
+  }
+  function noiseVar(p, Pdc, A) {
+    return noiseBreakdown(p, Pdc, A);
   }
   const _t = new Float64Array(64), _g = new Float64Array(64), _ord = new Int32Array(64);
   /* Términos de amplitud de una rama: señal, ISI tardía, ISI temprana y varianza de ruido. */
@@ -616,6 +687,25 @@ const VLC = (() => {
     const gp = goodputMbps(p.Rb, ber, D.codeRate(p), p.packet_bits);
     return { snrDb, berPre, ber, gp };
   }
+  function losGrid(p, grid, boxes, brs) {
+    const out = new Array(grid.n);
+    for (let i = 0; i < grid.n; i++) {
+      out[i] = losChannel(p, grid.pts[3 * i], grid.pts[3 * i + 1], grid.pts[3 * i + 2], boxes, brs);
+    }
+    return out;
+  }
+  function evaluateFromLos(p, grid, losAll, refl, indices) {
+    const brs = branches(p);
+    const list = indices || null;
+    const m = list ? list.length : grid.n;
+    const snr = new Float32Array(m), ber = new Float64Array(m), gp = new Float32Array(m);
+    for (let k = 0; k < m; k++) {
+      const i = list ? list[k] : k;
+      const r = pointPerf(p, brs, losAll[i], refl, i);
+      snr[k] = r.snrDb; ber[k] = r.ber; gp[k] = r.gp;
+    }
+    return { snr, ber, gp };
+  }
   function evaluateVLC(p, grid, boxes, refl) {
     const brs = branches(p), n = grid.n;
     const snr = new Float32Array(n), ber = new Float64Array(n), gp = new Float32Array(n);
@@ -625,6 +715,62 @@ const VLC = (() => {
       snr[i] = r.snrDb; ber[i] = r.ber; gp[i] = r.gp;
     }
     return { snr, ber, gp };
+  }
+  function rmsDelaySpreadPoint(p, br, h, d, hist, off, dt, nb) {
+    const beta = D.beta(p), scat = p.enable_scattering && beta > 0;
+    const phi = scat ? hgFovFraction(br.fov, p.dust_g_hg) : 0, w0 = p.dust_albedo;
+    let num1 = 0, num2 = 0, den = 0;
+    for (let j = 0; j < h.length; j++) {
+      if (h[j] <= 0) continue;
+      const tau = beta * d[j], tl = d[j] / C, gl = h[j] * Math.exp(-tau);
+      num1 += gl * tl; num2 += gl * tl * tl; den += gl;
+      if (scat) {
+        const gs = h[j] * phi * (-Math.expm1(-w0 * tau)) * Math.exp(-(1 - w0) * tau);
+        const ts = tl * (1 + tau) * (1 - p.dust_g_hg) * 0.5;
+        const tm = tl + ts;
+        num1 += gs * tm; num2 += gs * (tm * tm + ts * ts); den += gs;
+      }
+    }
+    if (hist) {
+      for (let k = 0; k < nb; k++) {
+        const g0 = hist[off + k]; if (!(g0 > 0)) continue;
+        const tk = k * dt, g = g0 * Math.exp(-beta * C * (k + 0.5) * dt);
+        num1 += g * tk; num2 += g * tk * tk; den += g;
+      }
+    }
+    if (!(den > 0)) return NaN;
+    const mu = num1 / den;
+    return Math.sqrt(Math.max(num2 / den - mu * mu, 0));
+  }
+  function pointImpulse(p, brs, los, refl, i) {
+    const beta = D.beta(p), nb = refl ? refl.nb : 0, dt = refl ? refl.dt : 1e-9;
+    const hr = new Float64Array(nb);
+    if (refl) {
+      for (let b = 0; b < brs.length; b++) {
+        const off = i * nb, h = refl.hist[b];
+        for (let k = 0; k < nb; k++) {
+          const g = h[off + k];
+          if (g > 0) hr[k] += (g * Math.exp(-beta * C * (k + 0.5) * dt)) / dt;
+        }
+      }
+    }
+    const losArrivals = [];
+    const nl = los[0].d.length;
+    for (let j = 0; j < nl; j++) {
+      let gTot = 0;
+      for (let b = 0; b < brs.length; b++) gTot += los[b].h[j];
+      const dd = los[0].d[j];
+      if (gTot > 0) losArrivals.push({ j, tNs: (dd / C) * 1e9, g: gTot * Math.exp(-beta * dd) });
+    }
+    const tauRmsNs = rmsDelaySpreadPoint(p, brs[0], los[0].h, los[0].d, refl ? refl.hist[0] : null, i * nb, dt, nb) * 1e9;
+    // Instante óptimo t0 de la rama principal (0) para marcar en el gráfico
+    let t0Ns = NaN;
+    if (losArrivals.length) {
+      const sorted = losArrivals.slice().sort((a, b) => a.tNs - b.tNs);
+      let gSum = 0; for (const a of sorted) gSum += a.g;
+      let acc = 0; for (const a of sorted) { acc += a.g; if (acc >= 0.5 * gSum) { t0Ns = a.tNs; break; } }
+    }
+    return { hr, dtNs: dt * 1e9, losArrivals, tauRmsNs, t0Ns };
   }
 
   // ---------------------------------------------------------------- Wi-Fi 2,4 GHz (3GPP InF-SH + Middleton Class A)
@@ -675,6 +821,47 @@ const VLC = (() => {
     }
     return { avail: ok / nFad, gp: gpSum / nFad, los, emi, snrMeanDb: prx - (nTh + 10 * Math.log10(1 + Math.pow(10, emi / 10))) };
   }
+  function wifiSweepEmi(w, grid, indices, heavy, workers, sfNorm, emiList, seed = 31, nFad = 30) {
+    const ap = w.ap_pos, nTh = -174 + 10 * Math.log10(w.BW) + w.NF_dB;
+    const K = Math.pow(10, w.K_los_dB / 10), s = Math.sqrt(K / (K + 1)), sg = Math.sqrt(1 / (2 * (K + 1)));
+    const bwRatio = w.BW / w.Rb_target, m = indices.length, r = rng(seed);
+    // Precomputar muestras térmicas Eb/N0 por punto (independientes de la EMI)
+    const g0All = new Float64Array(m * nFad);
+    for (let idx = 0; idx < m; idx++) {
+      const i = indices[idx], x = grid.pts[3 * i], y = grid.pts[3 * i + 1], z = grid.pts[3 * i + 2];
+      const d3 = Math.max(Math.hypot(x - ap[0], y - ap[1], z - ap[2]), 1);
+      const los = !(heavy.length && segBlocked(x, y, z, ap[0], ap[1], ap[2], heavy));
+      const body = workers.length && segBlocked(x, y, z, ap[0], ap[1], ap[2], workers) ? w.body_loss_dB : 0;
+      const plL = 31.84 + 21.5 * Math.log10(d3) + 19.0 * Math.log10(w.fc_GHz);
+      const plN = Math.max(32.4 + 23.0 * Math.log10(d3) + 20.0 * Math.log10(w.fc_GHz), plL);
+      const prx = w.Pt_dBm + 2 * w.G_ant_dBi - (los ? plL : plN) - (los ? w.sigma_los : w.sigma_nlos) * sfNorm[i] - body;
+      const baseOff = idx * nFad;
+      for (let f = 0; f < nFad; f++) {
+        let pw;
+        if (los) { const a = s + sg * r.normal(), b = sg * r.normal(); pw = a * a + b * b; }
+        else { const a = r.normal() / Math.SQRT2, b = r.normal() / Math.SQRT2; pw = a * a + b * b; }
+        g0All[baseOff + f] = Math.pow(10, (prx + 10 * Math.log10(Math.max(pw, 1e-30)) - nTh) / 10) * bwRatio;
+      }
+    }
+    const covRaw = [], covFec = [];
+    for (const emi of emiList) {
+      let okRaw = 0, okFec = 0;
+      for (let idx = 0; idx < m; idx++) {
+        let cR = 0, cF = 0;
+        const baseOff = idx * nFad;
+        for (let f = 0; f < nFad; f++) {
+          const bp = middletonBer(g0All[baseOff + f], emi, w.emi_A);
+          if (bp <= 1e-6) cR++;
+          if (rsPostFecBer(bp) <= 1e-6) cF++;
+        }
+        if (cR / nFad >= 0.99) okRaw++;
+        if (cF / nFad >= 0.99) okFec++;
+      }
+      covRaw.push(100 * okRaw / m);
+      covFec.push(100 * okFec / m);
+    }
+    return { covRaw, covFec };
+  }
   const wifiPcomm = (w) => w.P_ap_W + w.P_rx_wifi_W;
 
   // ---------------------------------------------------------------- iluminancia (EN 12464-1)
@@ -700,11 +887,1084 @@ const VLC = (() => {
   }
 
   return { qfunc, rsPostFecBer, goodputMbps, hgFovFraction, ledBwEff, defaults, optimizedGrid, D, STATIC, STATIC_BOXES,
-    EMI_SOURCES, rng, randomDynamic, segBlocked, insideAny, receiverGrid, walls, branches, losChannel, reflections,
-    eyeTerms, eyeBer, pointPerf, evaluateVLC, wifiDefaults, wifiPoint, wifiPcomm, emiAt, middletonBer, illuminance,
+    EMI_SOURCES, rng, randomDynamic, segBlocked, insideAny, receiverGrid, walls, branches, losChannel, losGrid,
+    reflections, noiseBreakdown, eyeTerms, eyeBer, pointPerf, evaluateFromLos, evaluateVLC, rmsDelaySpreadPoint,
+    pointImpulse, wifiDefaults, wifiPoint, wifiSweepEmi, wifiPcomm, emiAt, middletonBer, illuminance,
     GRID3, GRID4 };
 })();
 if (typeof module !== "undefined") module.exports = VLC;
+
+/* vlc_charts.js — Motor de gráficos dinámicos en Canvas 2D (sin dependencias externas)
+ * para las pestañas E2–E11 del simulador 3D VLC industrial.
+ * Se inyecta en docs/index.html mediante web/build.py y es importable en Node para validación. */
+const VLCCharts = (() => {
+  "use strict";
+
+  const VIS_SWEEP = [200, 100, 50, 30, 20, 15, 10, 7, 5];
+  const DAYS_SWEEP = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120];
+  const TEMP_SWEEP = [0, 10, 20, 25, 35, 45, 55, 65, 70, 80, 90];
+  const RATE_SWEEP = [1, 2, 5, 10, 15, 20, 30, 50, 75, 100];
+  const EMI_SWEEP = [0, 10, 15, 20, 25, 30, 35, 40];
+
+  const fmt = (v, d = 1) => (Number.isFinite(v) ? v.toFixed(d).replace(".", ",") : "–");
+  function sciText(v) {
+    if (!(v > 0)) return "0";
+    const e = Math.floor(Math.log10(v)), m = v / Math.pow(10, e);
+    return `${fmt(m, 1)}e${e}`;
+  }
+  function median(arr) {
+    if (!arr.length) return NaN;
+    const s = Array.from(arr).sort((a, b) => a - b);
+    const n = s.length;
+    return n % 2 ? s[(n - 1) >> 1] : 0.5 * (s[n / 2 - 1] + s[n / 2]);
+  }
+  function percentile(arr, q) {
+    if (!arr.length) return NaN;
+    const s = Array.from(arr).sort((a, b) => a - b);
+    const pos = (s.length - 1) * q / 100, lo = Math.floor(pos), hi = Math.min(lo + 1, s.length - 1);
+    return s[lo] + (s[hi] - s[lo]) * (pos - lo);
+  }
+  function sampleIndices(freeIdx, maxN = 180) {
+    if (freeIdx.length <= maxN) return freeIdx;
+    const step = freeIdx.length / maxN, out = [];
+    for (let k = 0; k < maxN; k++) out.push(freeIdx[Math.floor(k * step)]);
+    return out;
+  }
+  function statsVLC(res) {
+    const n = res.ber.length;
+    if (!n) return { cov: 0, gp: 0, snrMed: NaN, logBerMed: 0, logBerP95: 0 };
+    let ok = 0, gpSum = 0;
+    const lb = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      if (res.ber[i] <= 1e-6) ok++;
+      gpSum += res.gp[i];
+      lb[i] = Math.log10(Math.max(res.ber[i], 1e-30));
+    }
+    return {
+      cov: 100 * ok / n,
+      gp: gpSum / n,
+      snrMed: median(res.snr),
+      logBerMed: median(lb),
+      logBerP95: percentile(lb, 95),
+    };
+  }
+
+  // =========================================================================
+  // 1. GENERADORES PUROS DE DATOS POR PESTAÑA (testeables sin DOM en Node)
+  // =========================================================================
+  function computeTabData(tabId, ctx) {
+    const V = ctx.V, p = ctx.p, w = ctx.w, grid = ctx.grid;
+    const freeIdx = ctx.freeIdx, idxS = sampleIndices(freeIdx, 180);
+    const losAll = ctx.losAll, refl = ctx.refl;
+    const P = (o) => Object.assign({}, p, o);
+
+    // --- E2: Respuesta impulsiva en la posición actual del AGV ---
+    if (tabId === "e2") {
+      const [ax, ay] = ctx.agv;
+      const brs = V.branches(p);
+      const one = { pts: new Float64Array([ax, ay, p.z_rx]), n: 1 };
+      const rOne = ctx.probeRefl || V.reflections(p, one, V.STATIC_BOXES, brs);
+      const losOne = ctx.probeLos || V.losChannel(p, ax, ay, p.z_rx, ctx.boxes, brs);
+      const imp = V.pointImpulse(p, brs, losOne, rOne, 0);
+      const tNs = [], hVals = [];
+      let maxH = 0;
+      for (let k = 0; k < imp.hr.length; k++) {
+        const t = k * imp.dtNs;
+        if (t >= 10 && t <= 90) {
+          tNs.push(t);
+          hVals.push(imp.hr[k]);
+          if (imp.hr[k] > maxH) maxH = imp.hr[k];
+        }
+      }
+      const tauTxt = Number.isFinite(imp.tauRmsNs) ? `τ_RMS = ${fmt(imp.tauRmsNs, 1)} ns` : "sin señal";
+      return {
+        tabId,
+        panels: [{
+          kind: "impulse",
+          title: `E2 · Respuesta impulsiva en el AGV (${fmt(ax, 1)}, ${fmt(ay, 1)}) m · ${imp.losArrivals.length} lum. visibles · ${tauTxt}`,
+          xLabel: "Tiempo [ns]",
+          yLabel: "h(t) reflexiones [1/s]",
+          xMin: 10, xMax: 90,
+          tNs, hVals,
+          losArrivals: imp.losArrivals,
+          t0Ns: imp.t0Ns,
+          maxH: Math.max(maxH, 1e-6),
+        }],
+      };
+    }
+
+    // --- E3: CDF de BER en el área libre actual ---
+    if (tabId === "e3") {
+      const lbCur = [], lbIdeal = [];
+      for (const i of freeIdx) lbCur.push(Math.log10(Math.max(ctx.last.vlc.ber[i], 1e-30)));
+      lbCur.sort((a, b) => a - b);
+      // Referencia ideal rápida (sin polvo/suciedad/calor/sol, con la geometría actual de luminarias)
+      const pIdeal = P({ visibility: Infinity, days_dirty: 0, T_amb: 25, I_bg: 1000e-6 });
+      const rIdeal = V.evaluateFromLos(pIdeal, grid, losAll, refl, idxS);
+      for (let i = 0; i < rIdeal.ber.length; i++) lbIdeal.push(Math.log10(Math.max(rIdeal.ber[i], 1e-30)));
+      lbIdeal.sort((a, b) => a - b);
+      const toCdf = (sorted) => {
+        const xs = [], ys = [], step = Math.max(1, Math.floor(sorted.length / 120));
+        for (let i = 0; i < sorted.length; i += step) { xs.push(sorted[i]); ys.push(100 * (i + 1) / sorted.length); }
+        if (sorted.length && xs[xs.length - 1] !== sorted[sorted.length - 1]) {
+          xs.push(sorted[sorted.length - 1]); ys.push(100);
+        }
+        return { xs, ys };
+      };
+      const cCur = toCdf(lbCur), cId = toCdf(lbIdeal);
+      return {
+        tabId,
+        panels: [{
+          kind: "xy",
+          title: `E3 · Distribución acumulada (CDF) de BER · Cobertura actual: ${fmt(ctx.last.covV, 1)} %`,
+          xLabel: "log10(BER)",
+          yLabel: "% área libre con BER ≤ x",
+          xScale: "linear", xMin: -30, xMax: 0, yMin: 0, yMax: 103,
+          vLines: [{ x: -6, label: "BER = 10⁻⁶", color: "fail", dashed: true }],
+          series: [
+            { label: "Configuración actual", xs: cCur.xs, ys: cCur.ys, color: "ok", width: 2.4 },
+            { label: "Referencia limpia (25 °C, 0 d)", xs: cId.xs, ys: cId.ys, color: "muted", width: 1.6, dashed: true },
+          ],
+        }],
+      };
+    }
+
+    // --- E4: Polvo en suspensión (BER + Cobertura vs Visibilidad) ---
+    if (tabId === "e4") {
+      const curRate = Math.round(p.Rb / 1e6);
+      const rates = [curRate];
+      for (const cand of [10, 30, 2]) if (rates.length < 3 && !rates.includes(cand)) rates.push(cand);
+      const palette = ["ok", "blue", "hivis"];
+      const sBer = [], sCov = [];
+      rates.forEach((rbM, k) => {
+        const med = [], p95 = [], cov = [];
+        for (const vis of VIS_SWEEP) {
+          const st = statsVLC(V.evaluateFromLos(P({ visibility: vis, Rb: rbM * 1e6 }), grid, losAll, refl, idxS));
+          med.push(st.logBerMed); p95.push(st.logBerP95); cov.push(st.cov);
+        }
+        const tag = k === 0 ? `${rbM} Mb/s (actual)` : `${rbM} Mb/s`;
+        sBer.push({ label: `${tag} · med.`, xs: VIS_SWEEP, ys: med, color: palette[k], width: k === 0 ? 2.4 : 1.7, dots: true });
+        if (k === 0) sBer.push({ label: `${tag} · peor 5 %`, xs: VIS_SWEEP, ys: p95, color: palette[k], width: 1.5, dashed: true, dots: true });
+        sCov.push({ label: tag, xs: VIS_SWEEP, ys: cov, color: palette[k], width: k === 0 ? 2.4 : 1.7, dots: true });
+      });
+      const marker = Number.isFinite(p.visibility)
+        ? { x: p.visibility, label: `Actual: V=${p.visibility} m` }
+        : { note: "Actual: aire limpio (V = ∞)" };
+      return {
+        tabId,
+        panels: [
+          {
+            kind: "xy",
+            title: "E4a · BER vs concentración de polvo (extinción + scattering)",
+            xLabel: "Visibilidad V [m] (menor = más polvo)", yLabel: "log10(BER)",
+            xScale: "log-inv", xTicks: [200, 100, 50, 20, 10, 5], yMin: -30, yMax: 0,
+            hLines: [{ y: -6, label: "10⁻⁶", color: "fail", dashed: true }],
+            currentMarker: marker, series: sBer,
+          },
+          {
+            kind: "xy",
+            title: "E4b · Cobertura confiable vs concentración de polvo",
+            xLabel: "Visibilidad V [m] (menor = más polvo)", yLabel: "Cobertura BER ≤ 10⁻⁶ [%]",
+            xScale: "log-inv", xTicks: [200, 100, 50, 20, 10, 5], yMin: 0, yMax: 104,
+            currentMarker: marker, series: sCov,
+          },
+        ],
+      };
+    }
+
+    // --- E5: Suciedad acumulada en ópticas ---
+    if (tabId === "e5") {
+      const visCases = [{ v: p.visibility, label: Number.isFinite(p.visibility) ? `Actual (V=${p.visibility} m)` : "Actual (aire limpio)", color: "ok", width: 2.5 }];
+      if (Number.isFinite(p.visibility)) visCases.push({ v: Infinity, label: "Aire limpio", color: "blue", width: 1.6, dashed: true });
+      if (p.visibility !== 20) visCases.push({ v: 20, label: "Polvo V = 20 m", color: "safety", width: 1.6 });
+      if (p.visibility !== 10) visCases.push({ v: 10, label: "Polvo V = 10 m", color: "fail", width: 1.6 });
+      const series = visCases.slice(0, 3).map((vc) => {
+        const ys = DAYS_SWEEP.map((d) => statsVLC(V.evaluateFromLos(P({ visibility: vc.v, days_dirty: d }), grid, losAll, refl, idxS)).cov);
+        return { label: vc.label, xs: DAYS_SWEEP, ys, color: vc.color, width: vc.width, dashed: !!vc.dashed, dots: true };
+      });
+      return {
+        tabId,
+        panels: [{
+          kind: "xy",
+          title: `E5 · Efecto de suciedad acumulada LDD + acople térmico/I_bg (${Math.round(p.Rb / 1e6)} Mb/s)`,
+          xLabel: "Días sin limpiar ópticas", yLabel: "Cobertura BER ≤ 10⁻⁶ [%]",
+          xScale: "linear", xMin: 0, xMax: 120, yMin: 0, yMax: 104,
+          currentMarker: { x: p.days_dirty, label: `Actual: ${p.days_dirty} d` },
+          series,
+        }],
+      };
+    }
+
+    // --- E6: Temperatura (ΔSNR + descomposición de ruido en el AGV) ---
+    if (tabId === "e6") {
+      const refProt = statsVLC(V.evaluateFromLos(P({ T_amb: 25 }), grid, losAll, refl, idxS)).snrMed;
+      const refNoD = statsVLC(V.evaluateFromLos(P({ T_amb: 25, T_j_derate: null }), grid, losAll, refl, idxS)).snrMed;
+      const yProt = [], yNoD = [];
+      for (const T of TEMP_SWEEP) {
+        yProt.push(statsVLC(V.evaluateFromLos(P({ T_amb: T }), grid, losAll, refl, idxS)).snrMed - refProt);
+        yNoD.push(statsVLC(V.evaluateFromLos(P({ T_amb: T, T_j_derate: null }), grid, losAll, refl, idxS)).snrMed - refNoD);
+      }
+      const minY = Math.min(-1, ...yProt, ...yNoD);
+      const tDerateAmb = 85 - p.delta_T_j_nom * (1 + p.k_soil_th * (1 - V.D.Tstx(p)));
+
+      // E6b: descomposición de ruido en la posición actual del AGV
+      const [ax, ay] = ctx.agv;
+      const brs = V.branches(p);
+      const one = { pts: new Float64Array([ax, ay, p.z_rx]), n: 1 };
+      const rOne = ctx.probeRefl || V.reflections(p, one, V.STATIC_BOXES, brs);
+      const losOne = ctx.probeLos || V.losChannel(p, ax, ay, p.z_rx, ctx.boxes, brs);
+      const tempsBar = [25, 50, 70, 85];
+      const shotVals = [], thVals = [], dkVals = [], barLabels = [];
+      let activeGroup = 0, bestDiff = Infinity;
+      tempsBar.forEach((T, idx) => {
+        if (Math.abs(T - p.T_amb) < bestDiff) { bestDiff = Math.abs(T - p.T_amb); activeGroup = idx; }
+        const pt = P({ T_amb: T });
+        const e = V.eyeTerms(pt, brs[0], losOne[0].h, losOne[0].d, rOne ? rOne.hist[0] : null, 0, rOne ? rOne.dt : 0, rOne ? rOne.nb : 0);
+        const nb = V.noiseBreakdown(pt, e.Pdc, brs[0].A);
+        shotVals.push(Math.max(nb.sShotSignalBg, 1e-22));
+        thVals.push(Math.max(nb.sTh, 1e-22));
+        dkVals.push(Math.max(nb.sDark, 1e-22));
+        barLabels.push(`${T}°C\nTj=${Math.round(V.D.Tj(pt))}°`);
+      });
+      return {
+        tabId,
+        panels: [
+          {
+            kind: "xy",
+            title: "E6a · Pérdida térmica de SNR mediana (respecto a 25 °C)",
+            xLabel: "Temperatura ambiente T_amb [°C]", yLabel: "ΔSNR mediana [dB]",
+            xScale: "linear", xMin: 0, xMax: 90, yMin: Math.floor(minY * 1.15 - 0.3), yMax: Math.max(0.8, ...yProt) + 0.3,
+            vLines: [{ x: tDerateAmb, label: "Tj=85°C", color: "muted", dashed: true }],
+            currentMarker: { x: p.T_amb, label: `Actual: ${p.T_amb} °C` },
+            series: [
+              { label: "Con derating driver (Tj > 85 °C)", xs: TEMP_SWEEP, ys: yProt, color: "ok", width: 2.4, dots: true },
+              { label: "Sin derating (solo droop LED)", xs: TEMP_SWEEP, ys: yNoD, color: "blue", width: 1.7, dashed: true, dots: true },
+            ],
+          },
+          {
+            kind: "bars-grouped-log",
+            title: `E6b · Componentes de ruido en el AGV (${fmt(ax, 1)}, ${fmt(ay, 1)}) m`,
+            yLabel: "Varianza de ruido [A²]",
+            yMinExp: -20, yMaxExp: -13,
+            labels: barLabels,
+            activeGroup,
+            groups: [
+              { label: "Shot (señal+amb.)", values: shotVals, color: "blue" },
+              { label: "Térmico", values: thVals, color: "hivis" },
+              { label: "Corriente oscura", values: dkVals, color: "ok" },
+            ],
+          },
+        ],
+      };
+    }
+
+    // --- E7: Tasa de bits, BW del LED y Goodput ---
+    if (tabId === "e7") {
+      const cfgs = [
+        { label: "Configuración actual", ov: {}, color: "ok", width: 2.5, dashed: false },
+        { label: "LED sin ecualizar (3 MHz)", ov: { f_3db_led: 3e6, use_blue_filter: false }, color: "muted", width: 1.6, dashed: true },
+        { label: "Filtro azul (25 MHz) + RS-FEC", ov: { use_blue_filter: true, use_fec: true }, color: "purple", width: 1.9, dashed: false },
+      ];
+      const sCov = [], sGp = [];
+      for (const c of cfgs) {
+        const covs = [], gps = [];
+        for (const rbM of RATE_SWEEP) {
+          const st = statsVLC(V.evaluateFromLos(P(Object.assign({}, c.ov, { Rb: rbM * 1e6 })), grid, losAll, refl, idxS));
+          covs.push(st.cov); gps.push(st.gp);
+        }
+        sCov.push({ label: c.label, xs: RATE_SWEEP, ys: covs, color: c.color, width: c.width, dashed: c.dashed, dots: true });
+        sGp.push({ label: c.label, xs: RATE_SWEEP, ys: gps, color: c.color, width: c.width, dashed: c.dashed, dots: true });
+      }
+      const maxGp = Math.max(12, ...sGp.flatMap((s) => s.ys));
+      const curRb = p.Rb / 1e6;
+      return {
+        tabId,
+        panels: [
+          {
+            kind: "xy",
+            title: "E7a · Confiabilidad vs tasa de bits (ancho de banda LED e ISI)",
+            xLabel: "Tasa de bits OOK [Mb/s]", yLabel: "Cobertura BER ≤ 10⁻⁶ [%]",
+            xScale: "log", xTicks: [1, 2, 5, 10, 20, 50, 100], yMin: 0, yMax: 104,
+            currentMarker: { x: curRb, label: `Actual: ${fmt(curRb, 0)} Mb/s` },
+            series: sCov,
+          },
+          {
+            kind: "xy",
+            title: "E7b · Eficiencia (Goodput útil) vs tasa de transmisión",
+            xLabel: "Tasa de bits OOK [Mb/s]", yLabel: "Goodput medio [Mb/s]",
+            xScale: "log", xTicks: [1, 2, 5, 10, 20, 50, 100], yMin: 0, yMax: Math.ceil(maxGp * 1.12),
+            currentMarker: { x: curRb, label: `Actual: ${fmt(curRb, 0)} Mb/s` },
+            series: sGp,
+          },
+        ],
+      };
+    }
+
+    // --- E9: Comparación VLC vs Wi-Fi (EMI impulsiva y Polvo) ---
+    if (tabId === "e9") {
+      const idxW = sampleIndices(freeIdx, 120);
+      const sw = V.wifiSweepEmi(w, grid, idxW, ctx.heavy, ctx.workersB, ctx.sfNorm, EMI_SWEEP, 31 + ctx.seed, 30);
+      const vlcCurCov = ctx.last.covV;
+      const vlcEmiLine = EMI_SWEEP.map(() => vlcCurCov);
+      const emiMed = median(idxW.map((i) => ctx.last.we[i]));
+
+      const vlcDust = VIS_SWEEP.map((vis) => statsVLC(V.evaluateFromLos(P({ visibility: vis }), grid, losAll, refl, idxS)).cov);
+      const wifiCurLine = VIS_SWEEP.map(() => ctx.last.covW);
+      const dustMarker = Number.isFinite(p.visibility)
+        ? { x: p.visibility, label: `Actual: V=${p.visibility} m` }
+        : { note: "Actual: aire limpio" };
+
+      return {
+        tabId,
+        panels: [
+          {
+            kind: "xy",
+            title: `E9a · Interferencia EMI Middleton Class A (${Math.round(w.Rb_target / 1e6)} Mb/s)`,
+            xLabel: "EMI impulsiva sobre ruido térmico [dB]", yLabel: "Confiabilidad [%]",
+            xScale: "linear", xMin: 0, xMax: 40, yMin: 0, yMax: 105,
+            currentMarker: { x: Math.min(40, Math.max(0, emiMed)), label: `EMI nave ~${fmt(emiMed, 0)} dB` },
+            annotations: [
+              { x: 4, y: 5, text: "Oficina" },
+              { x: 14, y: 5, text: "Planta" },
+              { x: 24, y: 5, text: "VFD" },
+              { x: 35, y: 5, text: "Horno/sold." },
+            ],
+            series: [
+              { label: "VLC actual (inmune EMI)", xs: EMI_SWEEP, ys: vlcEmiLine, color: "ok", width: 2.5, dots: true },
+              { label: "Wi-Fi (+RS-FEC)", xs: EMI_SWEEP, ys: sw.covFec, color: "rf", width: 2.1, dots: true },
+              { label: "Wi-Fi (sin FEC)", xs: EMI_SWEEP, ys: sw.covRaw, color: "rf", width: 1.5, dashed: true, dots: true },
+            ],
+          },
+          {
+            kind: "xy",
+            title: "E9b · Polvo en suspensión (complementariedad VLC vs Wi-Fi)",
+            xLabel: "Visibilidad V [m] (menor = más polvo)", yLabel: "Confiabilidad [%]",
+            xScale: "log-inv", xTicks: [200, 100, 50, 20, 10, 5], yMin: 0, yMax: 105,
+            currentMarker: dustMarker,
+            series: [
+              { label: "VLC actual", xs: VIS_SWEEP, ys: vlcDust, color: "ok", width: 2.5, dots: true },
+              { label: `Wi-Fi (EMI nave, ${w.use_fec ? "+FEC" : "sin FEC"})`, xs: VIS_SWEEP, ys: wifiCurLine, color: "rf", width: 2.1, dashed: true, dots: true },
+            ],
+          },
+        ],
+      };
+    }
+
+    // --- E11: Sensibilidad de la eficiencia energética (Mbit/J) ---
+    if (tabId === "e11") {
+      const xsW = [];
+      for (let x = 0.15; x <= 3.001; x += 0.05) xsW.push(+x.toFixed(2));
+      const gpV = ctx.last.gpV, gpW = ctx.last.gpW;
+      const prx1 = p.P_rx_vlc, prxAdr = p.P_rx_vlc * 1.6;
+      const y9 = xsW.map((pw) => gpV / (9 * pw + prx1));
+      const y16 = xsW.map((pw) => gpV / (16 * pw + prxAdr));
+      const eeApCur = gpW / (w.P_ap_W + w.P_rx_wifi_W);
+      const eeAp6 = gpW / (6 + w.P_rx_wifi_W);
+      const eeAp15 = gpW / (15 + w.P_rx_wifi_W);
+
+      const nl = p.led_xy.length, prxCur = p.P_rx_vlc * (p.adr_enabled ? 1.6 : 1);
+      const beCur = gpW > 0 ? (gpV * (w.P_ap_W + w.P_rx_wifi_W) / gpW - prxCur) / nl : NaN;
+      const beTxt = Number.isFinite(beCur) && beCur > 0
+        ? `Equilibrio (${nl} lum. vs AP ${fmt(w.P_ap_W, 0)} W): ${fmt(beCur, 2)} W/lum.`
+        : "Sin equilibrio positivo";
+
+      return {
+        tabId,
+        panels: [{
+          kind: "xy",
+          title: `E11 · Sensibilidad de eficiencia energética · ${beTxt}`,
+          xLabel: "Potencia eléctrica extra por luminaria para modular [W]",
+          yLabel: "Eficiencia incremental [Mbit/J]",
+          xScale: "linear", xMin: 0, xMax: 3.0, yMin: 0, yMax: 3.0,
+          currentMarker: { x: p.P_comm_extra_per_led, label: `Actual: ${fmt(p.P_comm_extra_per_led, 2)} W` },
+          hLines: [
+            { y: eeApCur, label: `Wi-Fi AP ${fmt(w.P_ap_W, 0)} W (${fmt(eeApCur, 2)})`, color: "rf", dashed: false },
+            { y: eeAp6, label: `AP 6 W (${fmt(eeAp6, 2)})`, color: "muted", dashed: true },
+            { y: eeAp15, label: `AP 15 W (${fmt(eeAp15, 2)})`, color: "muted", dashed: true },
+          ],
+          series: [
+            { label: `VLC 9 lum. 1-PD (${fmt(gpV, 2)} Mb/s)`, xs: xsW, ys: y9, color: "blue", width: p.led_xy.length === 9 ? 2.6 : 1.7 },
+            { label: `VLC 16 lum. ADR (${fmt(gpV, 2)} Mb/s)`, xs: xsW, ys: y16, color: "ok", width: p.led_xy.length === 16 ? 2.6 : 1.7 },
+          ],
+        }],
+      };
+    }
+
+    // --- E8/E10: Ablación instantánea o Monte Carlo bajo demanda ---
+    if (tabId === "e8e10") {
+      if (ctx.mcTab && ctx.mcTab.valid) {
+        const mc = ctx.mcTab;
+        return {
+          tabId,
+          mcActive: true,
+          panels: [
+            {
+              kind: "xy",
+              title: `E8 · Disponibilidad ≥ 99 % vs tránsito (${mc.nRuns} sorteos Monte Carlo)`,
+              xLabel: "Operarios en la nave (+1 grúa cada 10)", yLabel: "Ubicaciones con dispo. ≥ 99 % [%]",
+              xScale: "linear", xMin: 0, xMax: 40, yMin: 0, yMax: 105,
+              currentMarker: { x: ctx.workers, label: `Actual: ${ctx.workers} op.` },
+              series: mc.e8Series,
+            },
+            {
+              kind: "bars",
+              title: `E10 · Ablación Monte Carlo (dispo. ≥ 99 %, ${mc.nw10 ?? ctx.workers} op.)`,
+              yLabel: "Ubicaciones ≥ 99 % [%]",
+              yMin: 0, yMax: 112, unit: "%",
+              bars: mc.e10Bars,
+            },
+          ],
+        };
+      }
+
+      // Vista instantánea de ablación E10 sobre la configuración actual (sin congelar sliders)
+      const pBase = Object.assign(V.defaults(), {
+        visibility: p.visibility, days_dirty: Math.max(p.days_dirty, 0), T_amb: p.T_amb, I_bg: p.I_bg, Rb: p.Rb,
+        P_comm_extra_per_led: p.P_comm_extra_per_led,
+      });
+      const pFilt = Object.assign({}, pBase, { use_blue_filter: true, days_dirty: Math.min(pBase.days_dirty, 7) });
+      const pFec = Object.assign({}, pFilt, { use_fec: true });
+      const pAdr = Object.assign(V.optimizedGrid(pFec), { adr_enabled: true });
+
+      const rB = ctx.evalConfigInstant(pBase, idxS);
+      const rF = ctx.evalConfigInstant(pFilt, idxS);
+      const rC = ctx.evalConfigInstant(pFec, idxS);
+      const rA = ctx.evalConfigInstant(pAdr, idxS);
+
+      // Wi-Fi + FEC en los mismos índices
+      const wFec = Object.assign({}, w, { use_fec: true });
+      const rRng = V.rng(17 + ctx.seed);
+      let wOk = 0, wGp = 0, hOk = 0, hGp = 0;
+      for (let k = 0; k < idxS.length; k++) {
+        const i = idxS[k];
+        const o = V.wifiPoint(wFec, grid.pts[3 * i], grid.pts[3 * i + 1], 1, ctx.heavy, ctx.workersB, ctx.sfNorm[i], rRng, 25);
+        const wGood = o.avail >= 0.99;
+        const vGood = rA.ber[k] <= 1e-6;
+        if (wGood) wOk++;
+        wGp += o.gp;
+        if (wGood || vGood) hOk++;
+        hGp += Math.max(o.gp, rA.gp[k]);
+      }
+      const n = idxS.length;
+      const stB = statsVLC(rB), stF = statsVLC(rF), stC = statsVLC(rC), stA = statsVLC(rA);
+      const covW = 100 * wOk / n, gpW = wGp / n, covH = 100 * hOk / n, gpH = hGp / n;
+      const pwFec = V.wifiPcomm(wFec);
+      const barsCov = [
+        { label: "1. Base\n3×3", value: stB.cov, color: "fail" },
+        { label: "2. +Filtro\n+≤7 d", value: stF.cov, color: "hivis" },
+        { label: "3. +RS\nFEC", value: stC.cov, color: "safety" },
+        { label: "4. +ADR\n4×4", value: stA.cov, color: "ok" },
+        { label: "5. Wi-Fi\n+FEC", value: covW, color: "rf" },
+        { label: "6. Híbrido\nVLC+RF", value: covH, color: "blue" },
+      ];
+      const barsGp = [
+        { label: "1. Base\n3×3", value: stB.gp, sub: `${fmt(stB.gp / V.D.Pcomm(pBase), 2)} M/J`, color: "fail" },
+        { label: "2. +Filtro\n+≤7 d", value: stF.gp, sub: `${fmt(stF.gp / V.D.Pcomm(pFilt), 2)} M/J`, color: "hivis" },
+        { label: "3. +RS\nFEC", value: stC.gp, sub: `${fmt(stC.gp / V.D.Pcomm(pFec), 2)} M/J`, color: "safety" },
+        { label: "4. +ADR\n4×4", value: stA.gp, sub: `${fmt(stA.gp / V.D.Pcomm(pAdr), 2)} M/J`, color: "ok" },
+        { label: "5. Wi-Fi\n+FEC", value: gpW, sub: `${fmt(gpW / pwFec, 2)} M/J`, color: "rf" },
+        { label: "6. Híbrido\nVLC+RF", value: gpH, sub: `${fmt(gpH / (V.D.Pcomm(pAdr) + pwFec), 2)} M/J`, color: "blue" },
+      ];
+      const maxGp = Math.max(p.Rb / 1e6 * 1.2, 2);
+      return {
+        tabId,
+        mcActive: false,
+        panels: [
+          {
+            kind: "bars",
+            title: "E10 · Ablación instantánea: Confiabilidad (escena actual)",
+            yLabel: "Área confiable [%]", yMin: 0, yMax: 112, unit: "%",
+            bars: barsCov,
+          },
+          {
+            kind: "bars",
+            title: "E10 · Ablación instantánea: Goodput [Mb/s] y Mbit/J",
+            yLabel: "Goodput medio [Mb/s]", yMin: 0, yMax: maxGp, unit: "",
+            bars: barsGp,
+          },
+        ],
+      };
+    }
+
+    return { tabId, panels: [] };
+  }
+
+  // =========================================================================
+  // 2. MOTOR DE RENDERIZADO CANVAS 2D (nativo, Retina, claro/oscuro, tooltips)
+  // =========================================================================
+  function readPalette() {
+    const cs = getComputedStyle(document.documentElement);
+    const get = (k, fb) => cs.getPropertyValue(k).trim() || fb;
+    const isDark = cs.colorScheme.includes("dark") || document.documentElement.dataset.theme === "dark";
+    return {
+      bg: get("--panel", "#f2f4f3"),
+      panel2: get("--panel-2", "#e9eceb"),
+      ink: get("--ink", "#1e2a2f"),
+      muted: get("--muted", "#56646a"),
+      line: get("--line", "#c3cac9"),
+      ok: get("--ok", "#0f7a74"),
+      rf: get("--rf", "#b4236d"),
+      safety: get("--safety", "#d99b00"),
+      hivis: get("--hivis", "#e8641b"),
+      fail: get("--fail", "#c0362c"),
+      blue: isDark ? "#6aa8ff" : "#1f6fd1",
+      purple: isDark ? "#b794f4" : "#6b46c1",
+      isDark,
+    };
+  }
+
+  function setupCanvas(canvas) {
+    const rect = canvas.getBoundingClientRect();
+    const w = Math.max(220, Math.floor(rect.width));
+    const h = Math.max(150, Math.floor(rect.height));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (canvas.width !== Math.floor(w * dpr) || canvas.height !== Math.floor(h * dpr)) {
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+    }
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w, h };
+  }
+
+  function niceTicks(min, max, maxTicks = 5) {
+    const span = max - min;
+    if (!(span > 0)) return [min];
+    const rough = span / maxTicks;
+    const pow = Math.pow(10, Math.floor(Math.log10(rough)));
+    const norm = rough / pow;
+    const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * pow;
+    const start = Math.ceil(min / step - 1e-9) * step;
+    const out = [];
+    for (let v = start; v <= max + 1e-9; v += step) out.push(+v.toFixed(6));
+    return out;
+  }
+
+  function drawXYChart(canvas, spec, pal, hoverX) {
+    const { ctx, w, h } = setupCanvas(canvas);
+    ctx.clearRect(0, 0, w, h);
+
+    const pad = { l: 48, r: 16, t: 38, b: 36 };
+    const pw = Math.max(60, w - pad.l - pad.r);
+    const ph = Math.max(60, h - pad.t - pad.b);
+
+    // Escalas X
+    let xMap, xInv, xTicks;
+    if (spec.xScale === "log-inv") {
+      const lMax = Math.log10(200), lMin = Math.log10(5);
+      xMap = (x) => pad.l + ((lMax - Math.log10(Math.max(x, 1e-6))) / (lMax - lMin)) * pw;
+      xInv = (px) => Math.pow(10, lMax - ((px - pad.l) / pw) * (lMax - lMin));
+      xTicks = spec.xTicks || [200, 100, 50, 20, 10, 5];
+    } else if (spec.xScale === "log") {
+      const lMin = Math.log10(1), lMax = Math.log10(100);
+      xMap = (x) => pad.l + ((Math.log10(Math.max(x, 1e-6)) - lMin) / (lMax - lMin)) * pw;
+      xInv = (px) => Math.pow(10, lMin + ((px - pad.l) / pw) * (lMax - lMin));
+      xTicks = spec.xTicks || [1, 2, 5, 10, 20, 50, 100];
+    } else {
+      const xMin = spec.xMin ?? 0, xMax = spec.xMax ?? 100;
+      xMap = (x) => pad.l + ((x - xMin) / Math.max(xMax - xMin, 1e-9)) * pw;
+      xInv = (px) => xMin + ((px - pad.l) / pw) * (xMax - xMin);
+      xTicks = spec.xTicks || niceTicks(xMin, xMax, 6);
+    }
+
+    const yMin = spec.yMin ?? 0, yMax = spec.yMax ?? 100;
+    const yMap = (y) => pad.t + ph - ((Math.min(Math.max(y, yMin), yMax) - yMin) / Math.max(yMax - yMin, 1e-9)) * ph;
+    const yTicks = spec.yTicks || ((yMin === 0 && yMax >= 100 && yMax <= 115) ? [0, 25, 50, 75, 100]
+      : (yMin === -30 && yMax === 0) ? [-30, -24, -18, -12, -6, 0] : niceTicks(yMin, yMax, 5));
+
+    // Fondo del área de trazado
+    ctx.fillStyle = pal.panel2;
+    ctx.fillRect(pad.l, pad.t, pw, ph);
+
+    // Grilla y ticks
+    ctx.strokeStyle = pal.line;
+    ctx.lineWidth = 1;
+    ctx.font = '11px "Barlow", sans-serif';
+    ctx.fillStyle = pal.muted;
+
+    // Horizontales
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (const yv of yTicks) {
+      const py = yMap(yv);
+      ctx.globalAlpha = 0.45;
+      ctx.beginPath(); ctx.moveTo(pad.l, py); ctx.lineTo(pad.l + pw, py); ctx.stroke();
+      ctx.globalAlpha = 1;
+      const dec = Math.abs(yv - Math.round(yv)) > 1e-4 ? 1 : 0;
+      ctx.fillText(fmt(yv, dec), pad.l - 6, py);
+    }
+
+    // Verticales
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    for (const xv of xTicks) {
+      const px = xMap(xv);
+      if (px < pad.l - 2 || px > pad.l + pw + 2) continue;
+      ctx.globalAlpha = 0.45;
+      ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + ph); ctx.stroke();
+      ctx.globalAlpha = 1;
+      const dec = Math.abs(xv - Math.round(xv)) > 1e-4 ? 1 : 0;
+      ctx.fillText(fmt(xv, dec), px, pad.t + ph + 5);
+    }
+
+    // Borde del área
+    ctx.strokeStyle = pal.line; ctx.lineWidth = 1;
+    ctx.strokeRect(pad.l, pad.t, pw, ph);
+
+    // Líneas de referencia horizontales y verticales
+    if (spec.hLines) {
+      for (const hl of spec.hLines) {
+        if (hl.y < yMin || hl.y > yMax) continue;
+        const py = yMap(hl.y);
+        ctx.save();
+        ctx.strokeStyle = pal[hl.color] || pal.muted;
+        ctx.lineWidth = hl.dashed ? 1.2 : 1.7;
+        if (hl.dashed) ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(pad.l, py); ctx.lineTo(pad.l + pw, py); ctx.stroke();
+        ctx.fillStyle = pal[hl.color] || pal.muted;
+        ctx.font = '600 10.5px "Barlow", sans-serif';
+        ctx.textAlign = "right"; ctx.textBaseline = "bottom";
+        if (hl.label) ctx.fillText(hl.label, pad.l + pw - 4, py - 2);
+        ctx.restore();
+      }
+    }
+    if (spec.vLines) {
+      for (const vl of spec.vLines) {
+        const px = xMap(vl.x);
+        if (px < pad.l || px > pad.l + pw) continue;
+        ctx.save();
+        ctx.strokeStyle = pal[vl.color] || pal.muted;
+        ctx.lineWidth = 1.3;
+        if (vl.dashed) ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + ph); ctx.stroke();
+        ctx.fillStyle = pal[vl.color] || pal.muted;
+        ctx.font = '600 10.5px "Barlow", sans-serif';
+        const leftSide = px > pad.l + pw * 0.45;
+        ctx.textAlign = leftSide ? "right" : "left";
+        ctx.textBaseline = "bottom";
+        if (vl.label) ctx.fillText(vl.label, px + (leftSide ? -4 : 4), pad.t + ph - 4);
+        ctx.restore();
+      }
+    }
+
+    // Anotaciones discretas (ej. regímenes EMI)
+    if (spec.annotations) {
+      ctx.save();
+      ctx.fillStyle = pal.muted;
+      ctx.font = '10px "Barlow", sans-serif';
+      ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+      for (const a of spec.annotations) ctx.fillText(a.text, xMap(a.x), yMap(a.y));
+      ctx.restore();
+    }
+
+    // Series (clip dentro del área de trazado)
+    ctx.save();
+    ctx.beginPath(); ctx.rect(pad.l, pad.t, pw, ph); ctx.clip();
+    for (const s of spec.series) {
+      const col = pal[s.color] || pal.ok;
+      ctx.strokeStyle = col;
+      ctx.fillStyle = col;
+      ctx.lineWidth = s.width || 2;
+      ctx.setLineDash(s.dashed ? [5, 4] : []);
+      ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < s.xs.length; i++) {
+        if (!Number.isFinite(s.ys[i])) continue;
+        const px = xMap(s.xs[i]), py = yMap(s.ys[i]);
+        if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (s.dots) {
+        for (let i = 0; i < s.xs.length; i++) {
+          if (!Number.isFinite(s.ys[i])) continue;
+          ctx.beginPath(); ctx.arc(xMap(s.xs[i]), yMap(s.ys[i]), 2.7, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    }
+    ctx.restore();
+
+    // Marcador del valor actual del slider
+    if (spec.currentMarker) {
+      const cm = spec.currentMarker;
+      ctx.save();
+      if (Number.isFinite(cm.x)) {
+        const px = xMap(cm.x);
+        if (px >= pad.l && px <= pad.l + pw) {
+          ctx.strokeStyle = pal.safety;
+          ctx.lineWidth = 1.6;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + ph); ctx.stroke();
+          ctx.setLineDash([]);
+          // Pastilla superior
+          ctx.font = '600 10.5px "Barlow", sans-serif';
+          const tw = ctx.measureText(cm.label).width + 10;
+          const bx = Math.min(Math.max(px - tw / 2, pad.l + 2), pad.l + pw - tw - 2);
+          ctx.fillStyle = pal.safety;
+          ctx.fillRect(bx, pad.t + 3, tw, 16);
+          ctx.fillStyle = "#1e2a2f";
+          ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText(cm.label, bx + tw / 2, pad.t + 11);
+        }
+      } else if (cm.note) {
+        ctx.font = '600 10.5px "Barlow", sans-serif';
+        const tw = ctx.measureText(cm.note).width + 10;
+        ctx.fillStyle = pal.panel;
+        ctx.fillRect(pad.l + 4, pad.t + 4, tw, 16);
+        ctx.fillStyle = pal.muted;
+        ctx.textAlign = "left"; ctx.textBaseline = "middle";
+        ctx.fillText(cm.note, pad.l + 9, pad.t + 12);
+      }
+      ctx.restore();
+    }
+
+    // Guía vertical de hover
+    if (hoverX != null && hoverX >= pad.l && hoverX <= pad.l + pw) {
+      ctx.save();
+      ctx.strokeStyle = pal.ink; ctx.globalAlpha = 0.45; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(hoverX, pad.t); ctx.lineTo(hoverX, pad.t + ph); ctx.stroke();
+      ctx.restore();
+    }
+
+    // Título y leyenda compacta arriba
+    ctx.fillStyle = pal.ink;
+    ctx.font = '600 13px "Barlow Condensed", sans-serif';
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText(spec.title, pad.l, 4);
+
+    let lx = pad.l;
+    ctx.font = '10.5px "Barlow", sans-serif';
+    ctx.textBaseline = "middle";
+    for (const s of spec.series) {
+      const col = pal[s.color] || pal.ok;
+      const lw = ctx.measureText(s.label).width;
+      if (lx + lw + 24 > w - 4) break;
+      ctx.strokeStyle = col; ctx.lineWidth = 2.2;
+      ctx.setLineDash(s.dashed ? [4, 3] : []);
+      ctx.beginPath(); ctx.moveTo(lx, 26); ctx.lineTo(lx + 12, 26); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = pal.muted;
+      ctx.fillText(s.label, lx + 16, 26);
+      lx += lw + 26;
+    }
+
+    // Etiquetas de ejes
+    ctx.fillStyle = pal.muted;
+    ctx.font = '11px "Barlow", sans-serif';
+    ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+    ctx.fillText(spec.xLabel, pad.l + pw / 2, h - 2);
+    ctx.save();
+    ctx.translate(12, pad.t + ph / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    ctx.fillText(spec.yLabel, 0, 0);
+    ctx.restore();
+
+    canvas._meta = { kind: "xy", pad, pw, ph, xMap, xInv, yMap, spec };
+  }
+
+  function drawImpulseChart(canvas, spec, pal, hoverX) {
+    const { ctx, w, h } = setupCanvas(canvas);
+    ctx.clearRect(0, 0, w, h);
+    const pad = { l: 52, r: 16, t: 38, b: 36 };
+    const pw = Math.max(60, w - pad.l - pad.r);
+    const ph = Math.max(60, h - pad.t - pad.b);
+    const xMin = spec.xMin, xMax = spec.xMax;
+    const yMax = spec.maxH * 1.22;
+    const xMap = (x) => pad.l + ((x - xMin) / (xMax - xMin)) * pw;
+    const xInv = (px) => xMin + ((px - pad.l) / pw) * (xMax - xMin);
+    const yMap = (y) => pad.t + ph - (Math.min(Math.max(y, 0), yMax) / yMax) * ph;
+
+    ctx.fillStyle = pal.panel2; ctx.fillRect(pad.l, pad.t, pw, ph);
+    ctx.strokeStyle = pal.line; ctx.lineWidth = 1;
+    ctx.font = '11px "Barlow", sans-serif'; ctx.fillStyle = pal.muted;
+
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (let i = 0; i <= 4; i++) {
+      const yv = yMax * i / 4, py = yMap(yv);
+      ctx.globalAlpha = 0.45; ctx.beginPath(); ctx.moveTo(pad.l, py); ctx.lineTo(pad.l + pw, py); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.fillText(yv >= 10 ? fmt(yv, 0) : fmt(yv, 1), pad.l - 6, py);
+    }
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    for (let t = 10; t <= 90; t += 10) {
+      const px = xMap(t);
+      ctx.globalAlpha = 0.45; ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + ph); ctx.stroke();
+      ctx.globalAlpha = 1; ctx.fillText(String(t), px, pad.t + ph + 5);
+    }
+    ctx.strokeStyle = pal.line; ctx.strokeRect(pad.l, pad.t, pw, ph);
+
+    // Curva de reflexiones con relleno suave
+    ctx.save();
+    ctx.beginPath(); ctx.rect(pad.l, pad.t, pw, ph); ctx.clip();
+    if (spec.tNs.length) {
+      ctx.beginPath();
+      ctx.moveTo(xMap(spec.tNs[0]), pad.t + ph);
+      for (let i = 0; i < spec.tNs.length; i++) ctx.lineTo(xMap(spec.tNs[i]), yMap(spec.hVals[i]));
+      ctx.lineTo(xMap(spec.tNs[spec.tNs.length - 1]), pad.t + ph);
+      ctx.closePath();
+      ctx.fillStyle = pal.blue; ctx.globalAlpha = 0.16; ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      for (let i = 0; i < spec.tNs.length; i++) {
+        const px = xMap(spec.tNs[i]), py = yMap(spec.hVals[i]);
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.strokeStyle = pal.blue; ctx.lineWidth = 2; ctx.stroke();
+    }
+
+    // Llegadas LOS verticales
+    let maxG = 0;
+    for (const a of spec.losArrivals) if (a.g > maxG) maxG = a.g;
+    for (const a of spec.losArrivals) {
+      const px = xMap(a.tNs);
+      const frac = maxG > 0 ? 0.35 + 0.60 * (a.g / maxG) : 0.8;
+      const pyTop = pad.t + ph * (1 - frac);
+      ctx.strokeStyle = pal.ok; ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.moveTo(px, pad.t + ph); ctx.lineTo(px, pyTop); ctx.stroke();
+      ctx.fillStyle = pal.ok;
+      ctx.beginPath(); ctx.arc(px, pyTop, 3.2, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Instante óptimo de muestreo t0
+    if (Number.isFinite(spec.t0Ns)) {
+      const px = xMap(spec.t0Ns);
+      ctx.strokeStyle = pal.safety; ctx.lineWidth = 1.6; ctx.setLineDash([4, 3]);
+      ctx.beginPath(); ctx.moveTo(px, pad.t); ctx.lineTo(px, pad.t + ph); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = pal.safety;
+      const lbl = `t₀ ópt. ${fmt(spec.t0Ns, 1)} ns`;
+      ctx.font = '600 10.5px "Barlow", sans-serif';
+      const tw = ctx.measureText(lbl).width + 8;
+      const bx = Math.min(Math.max(px - tw / 2, pad.l + 2), pad.l + pw - tw - 2);
+      ctx.fillRect(bx, pad.t + 3, tw, 16);
+      ctx.fillStyle = "#1e2a2f"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(lbl, bx + tw / 2, pad.t + 11);
+    }
+    ctx.restore();
+
+    if (hoverX != null && hoverX >= pad.l && hoverX <= pad.l + pw) {
+      ctx.save(); ctx.strokeStyle = pal.ink; ctx.globalAlpha = 0.45;
+      ctx.beginPath(); ctx.moveTo(hoverX, pad.t); ctx.lineTo(hoverX, pad.t + ph); ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.fillStyle = pal.ink; ctx.font = '600 13px "Barlow Condensed", sans-serif';
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText(spec.title, pad.l, 4);
+
+    // Leyenda compacta
+    ctx.font = '10.5px "Barlow", sans-serif'; ctx.textBaseline = "middle";
+    ctx.fillStyle = pal.ok; ctx.fillRect(pad.l, 24, 10, 4);
+    ctx.fillStyle = pal.muted; ctx.fillText("Llegadas LOS (por luminaria)", pad.l + 14, 26);
+    ctx.fillStyle = pal.blue; ctx.fillRect(pad.l + 165, 24, 10, 4);
+    ctx.fillStyle = pal.muted; ctx.fillText("Reflexiones en paredes h(t)", pad.l + 179, 26);
+
+    ctx.fillStyle = pal.muted; ctx.font = '11px "Barlow", sans-serif';
+    ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText(spec.xLabel, pad.l + pw / 2, h - 2);
+    ctx.save(); ctx.translate(12, pad.t + ph / 2); ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(spec.yLabel, 0, 0); ctx.restore();
+
+    canvas._meta = { kind: "impulse", pad, pw, ph, xMap, xInv, spec };
+  }
+
+  function drawBarChart(canvas, spec, pal, hoverX) {
+    const { ctx, w, h } = setupCanvas(canvas);
+    ctx.clearRect(0, 0, w, h);
+    const isGroupedLog = spec.kind === "bars-grouped-log";
+    const pad = { l: isGroupedLog ? 52 : 44, r: 12, t: 38, b: 36 };
+    const pw = Math.max(60, w - pad.l - pad.r);
+    const ph = Math.max(60, h - pad.t - pad.b);
+
+    ctx.fillStyle = pal.panel2; ctx.fillRect(pad.l, pad.t, pw, ph);
+    ctx.strokeStyle = pal.line; ctx.lineWidth = 1;
+    ctx.font = '11px "Barlow", sans-serif'; ctx.fillStyle = pal.muted;
+
+    if (isGroupedLog) {
+      const eMin = spec.yMinExp, eMax = spec.yMaxExp;
+      const yMap = (val) => {
+        const lv = Math.min(Math.max(Math.log10(Math.max(val, Math.pow(10, eMin))), eMin), eMax);
+        return pad.t + ph - ((lv - eMin) / (eMax - eMin)) * ph;
+      };
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      for (let e = eMin; e <= eMax; e++) {
+        if ((eMax - eMin) > 5 && (e - eMin) % 2 !== 0 && e !== eMax) continue;
+        const py = pad.t + ph - ((e - eMin) / (eMax - eMin)) * ph;
+        ctx.globalAlpha = 0.45; ctx.beginPath(); ctx.moveTo(pad.l, py); ctx.lineTo(pad.l + pw, py); ctx.stroke();
+        ctx.globalAlpha = 1; ctx.fillText(`10^${e}`, pad.l - 5, py);
+      }
+      ctx.strokeRect(pad.l, pad.t, pw, ph);
+
+      const nG = spec.labels.length, nS = spec.groups.length;
+      const slot = pw / nG, bw = Math.min(22, (slot * 0.72) / nS);
+      for (let g = 0; g < nG; g++) {
+        const cx = pad.l + (g + 0.5) * slot;
+        if (g === spec.activeGroup) {
+          ctx.fillStyle = pal.safety; ctx.globalAlpha = 0.12;
+          ctx.fillRect(pad.l + g * slot + 2, pad.t + 1, slot - 4, ph - 2);
+          ctx.globalAlpha = 1;
+        }
+        const startX = cx - (nS * bw) / 2;
+        for (let s = 0; s < nS; s++) {
+          const val = spec.groups[s].values[g];
+          const py = yMap(val);
+          ctx.fillStyle = pal[spec.groups[s].color] || pal.ok;
+          ctx.fillRect(startX + s * bw + 1, py, bw - 2, pad.t + ph - py);
+        }
+        ctx.fillStyle = g === spec.activeGroup ? pal.ink : pal.muted;
+        ctx.font = (g === spec.activeGroup ? "600 " : "") + '10.5px "Barlow", sans-serif';
+        ctx.textAlign = "center"; ctx.textBaseline = "top";
+        spec.labels[g].split("\n").forEach((ln, li) => ctx.fillText(ln, cx, pad.t + ph + 4 + li * 12));
+      }
+
+      // Leyenda
+      let lx = pad.l; ctx.font = '10.5px "Barlow", sans-serif'; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+      for (const s of spec.groups) {
+        const lw = ctx.measureText(s.label).width;
+        ctx.fillStyle = pal[s.color] || pal.ok; ctx.fillRect(lx, 23, 9, 7);
+        ctx.fillStyle = pal.muted; ctx.fillText(s.label, lx + 12, 26);
+        lx += lw + 22;
+      }
+      canvas._meta = { kind: "bars-grouped-log", pad, pw, ph, slot, spec };
+    } else {
+      const yMin = spec.yMin ?? 0, yMax = spec.yMax ?? 100;
+      const yMap = (y) => pad.t + ph - ((Math.min(Math.max(y, yMin), yMax) - yMin) / Math.max(yMax - yMin, 1e-9)) * ph;
+      const bTicks = (yMin === 0 && yMax >= 100 && yMax <= 115) ? [0, 25, 50, 75, 100] : niceTicks(yMin, yMax, 4);
+      ctx.textAlign = "right"; ctx.textBaseline = "middle";
+      for (const yv of bTicks) {
+        const py = yMap(yv);
+        ctx.globalAlpha = 0.45; ctx.beginPath(); ctx.moveTo(pad.l, py); ctx.lineTo(pad.l + pw, py); ctx.stroke();
+        ctx.globalAlpha = 1; ctx.fillText(fmt(yv, Math.abs(yv - Math.round(yv)) > 1e-4 ? 1 : 0), pad.l - 5, py);
+      }
+      ctx.strokeRect(pad.l, pad.t, pw, ph);
+
+      const nB = spec.bars.length, slot = pw / nB, bw = Math.min(44, slot * 0.64);
+      const hoverIdx = (hoverX != null && hoverX >= pad.l && hoverX <= pad.l + pw) ? Math.floor((hoverX - pad.l) / slot) : -1;
+      for (let i = 0; i < nB; i++) {
+        const b = spec.bars[i], cx = pad.l + (i + 0.5) * slot, py = yMap(b.value);
+        ctx.fillStyle = pal[b.color] || pal.ok;
+        ctx.globalAlpha = hoverIdx === i ? 1 : 0.88;
+        ctx.fillRect(cx - bw / 2, py, bw, pad.t + ph - py);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = pal.ink;
+        ctx.font = '600 10.5px "Barlow", sans-serif'; ctx.textAlign = "center"; ctx.textBaseline = "bottom";
+        const valTxt = spec.unit === "%" ? `${fmt(b.value, 1)}%` : fmt(b.value, 2);
+        ctx.fillText(valTxt, cx, py - (b.sub ? 12 : 3));
+        if (b.sub) {
+          ctx.fillStyle = pal.muted; ctx.font = '9.5px "Barlow", sans-serif';
+          ctx.fillText(b.sub, cx, py - 2);
+        }
+        ctx.fillStyle = pal.muted; ctx.font = '10px "Barlow", sans-serif'; ctx.textBaseline = "top";
+        b.label.split("\n").forEach((ln, li) => ctx.fillText(ln, cx, pad.t + ph + 4 + li * 12));
+      }
+      canvas._meta = { kind: "bars", pad, pw, ph, slot, spec };
+    }
+
+    ctx.fillStyle = pal.ink; ctx.font = '600 13px "Barlow Condensed", sans-serif';
+    ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.fillText(spec.title, pad.l, 4);
+
+    ctx.fillStyle = pal.muted; ctx.font = '11px "Barlow", sans-serif';
+    ctx.save(); ctx.translate(11, pad.t + ph / 2); ctx.rotate(-Math.PI / 2);
+    ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText(spec.yLabel, 0, 0); ctx.restore();
+  }
+
+  function tooltipHtml(meta, localX) {
+    if (!meta || localX < meta.pad.l || localX > meta.pad.l + meta.pw) return null;
+    if (meta.kind === "xy") {
+      const xv = meta.xInv(localX);
+      const spec = meta.spec;
+      const lines = [`<b>${spec.xLabel.split("[")[0].trim()}: ${fmt(xv, xv < 10 ? 2 : 1)}</b>`];
+      for (const s of spec.series) {
+        if (!s.xs.length) continue;
+        let best = 0, bd = Infinity;
+        for (let i = 0; i < s.xs.length; i++) {
+          const d = Math.abs(meta.xMap(s.xs[i]) - localX);
+          if (d < bd) { bd = d; best = i; }
+        }
+        lines.push(`${s.label}: <b>${fmt(s.ys[best], 2)}</b>`);
+      }
+      return lines.join("<br>");
+    }
+    if (meta.kind === "impulse") {
+      const t = meta.xInv(localX);
+      const spec = meta.spec;
+      let best = 0, bd = Infinity;
+      for (let i = 0; i < spec.tNs.length; i++) {
+        const d = Math.abs(spec.tNs[i] - t);
+        if (d < bd) { bd = d; best = i; }
+      }
+      const nearLos = spec.losArrivals.filter((a) => Math.abs(a.tNs - t) < 1.2);
+      const lines = [`<b>t = ${fmt(t, 1)} ns</b>`, `h_refl(t): <b>${fmt(spec.hVals[best] || 0, 1)} 1/s</b>`];
+      if (nearLos.length) lines.push(`LOS lum. #${nearLos.map((a) => a.j + 1).join(", #")}`);
+      return lines.join("<br>");
+    }
+    if (meta.kind === "bars-grouped-log") {
+      const g = Math.min(meta.spec.labels.length - 1, Math.max(0, Math.floor((localX - meta.pad.l) / meta.slot)));
+      const lines = [`<b>${meta.spec.labels[g].replace("\n", " · ")}</b>`];
+      for (const s of meta.spec.groups) lines.push(`${s.label}: <b>${sciText(s.values[g])} A²</b>`);
+      return lines.join("<br>");
+    }
+    if (meta.kind === "bars") {
+      const idx = Math.min(meta.spec.bars.length - 1, Math.max(0, Math.floor((localX - meta.pad.l) / meta.slot)));
+      const b = meta.spec.bars[idx];
+      const vTxt = meta.spec.unit === "%" ? `${fmt(b.value, 1)} %` : `${fmt(b.value, 2)} Mb/s`;
+      return `<b>${b.label.replace("\n", " ")}</b><br>${vTxt}${b.sub ? ` (${b.sub})` : ""}`;
+    }
+    return null;
+  }
+
+  function renderPanels(hostEl, tipEl, tabData) {
+    const pal = readPalette();
+    const panels = tabData.panels || [];
+    hostEl.dataset.cols = String(panels.length > 1 ? 2 : 1);
+
+    // Reutilizar o crear los <canvas>
+    while (hostEl.children.length > panels.length) hostEl.removeChild(hostEl.lastChild);
+    while (hostEl.children.length < panels.length) {
+      const cv = document.createElement("canvas");
+      cv.className = "chart-cv";
+      cv.addEventListener("pointermove", (ev) => {
+        const r = cv.getBoundingClientRect();
+        const lx = ev.clientX - r.left;
+        const pSpec = cv._panelSpec;
+        if (!pSpec) return;
+        const palNow = readPalette();
+        if (pSpec.kind === "xy") drawXYChart(cv, pSpec, palNow, lx);
+        else if (pSpec.kind === "impulse") drawImpulseChart(cv, pSpec, palNow, lx);
+        else drawBarChart(cv, pSpec, palNow, lx);
+        const html = tooltipHtml(cv._meta, lx);
+        if (html) {
+          tipEl.innerHTML = html;
+          tipEl.hidden = false;
+          const hr = hostEl.getBoundingClientRect();
+          const tx = Math.min(Math.max(ev.clientX - hr.left + 12, 6), hr.width - tipEl.offsetWidth - 8);
+          const ty = Math.min(Math.max(ev.clientY - hr.top - 10, 6), hr.height - tipEl.offsetHeight - 8);
+          tipEl.style.left = tx + "px";
+          tipEl.style.top = ty + "px";
+        } else tipEl.hidden = true;
+      });
+      cv.addEventListener("pointerleave", () => {
+        tipEl.hidden = true;
+        const pSpec = cv._panelSpec;
+        if (!pSpec) return;
+        const palNow = readPalette();
+        if (pSpec.kind === "xy") drawXYChart(cv, pSpec, palNow, null);
+        else if (pSpec.kind === "impulse") drawImpulseChart(cv, pSpec, palNow, null);
+        else drawBarChart(cv, pSpec, palNow, null);
+      });
+      hostEl.appendChild(cv);
+    }
+
+    panels.forEach((pSpec, i) => {
+      const cv = hostEl.children[i];
+      cv._panelSpec = pSpec;
+      if (pSpec.kind === "xy") drawXYChart(cv, pSpec, pal, null);
+      else if (pSpec.kind === "impulse") drawImpulseChart(cv, pSpec, pal, null);
+      else drawBarChart(cv, pSpec, pal, null);
+    });
+  }
+
+  return { computeTabData, renderPanels, sampleIndices, statsVLC };
+})();
+if (typeof module !== "undefined") module.exports = VLCCharts;
 
 </script>
 <script>
@@ -729,6 +1989,7 @@ const S = {
   mode: "vlc", vis: 0, days: 0, temp: 25, ibg: 1000, workers: 0, rate: 10, grid: 3, rx: "pd", fov: 60, led: 15,
   blue: false, fec: false, emi: 0, pled: 1, pap: 12, seed: 7,
   agv: [6.25, 6.25], mc: null, fl: null,
+  chartsOpen: false, chartTab: "e4", mcTab: null,
 };
 const PRESETS = {
   s0: { vis: 0, days: 0, temp: 25, ibg: 1000, workers: 0, fl: null },
@@ -761,10 +2022,24 @@ function buildParams() {
 function wifiParams() { return Object.assign(VLC.wifiDefaults(), { use_fec: S.fec, Rb_target: S.rate * 1e6, emi_scale_dB: S.emi, P_ap_W: S.pap }); }
 
 const reflCache = new Map();
-function getRefl(p) {
-  const key = `${S.grid}|${S.rx}|${S.rx === "pd" ? S.fov : 45}`;
+function getReflFor(p) {
+  const gN = p.led_xy.length === 16 ? 4 : 3;
+  const rxK = p.adr_enabled ? "adr" : "pd";
+  const key = `${gN}|${rxK}|${p.adr_enabled ? p.adr_fov_deg : p.fov_deg}`;
   if (!reflCache.has(key)) reflCache.set(key, VLC.reflections(p, grid, VLC.STATIC_BOXES, VLC.branches(p)));
   return reflCache.get(key);
+}
+function getRefl(p) { return getReflFor(p); }
+const losCache = new Map();
+function getLosFor(p) {
+  const gN = p.led_xy.length === 16 ? 4 : 3;
+  const rxK = p.adr_enabled ? "adr" : "pd";
+  const key = `${gN}|${rxK}|${p.adr_enabled ? p.adr_fov_deg : p.fov_deg}|${S.workers}|${forklifts(S.workers)}|${S.seed}`;
+  if (!losCache.has(key)) {
+    if (losCache.size >= 8) losCache.clear();
+    losCache.set(key, VLC.losGrid(p, grid, VLC.STATIC_BOXES.concat(dyn), VLC.branches(p)));
+  }
+  return losCache.get(key);
 }
 const illumCache = new Map();
 function getIllum(p) {
@@ -978,7 +2253,8 @@ function freeMask() {
 function compute() {
   const p = buildParams(), w = wifiParams();
   const refl = getRefl(p), boxes = VLC.STATIC_BOXES.concat(dyn);
-  const vlc = VLC.evaluateVLC(p, grid, boxes, refl);
+  const losAll = getLosFor(p);
+  const vlc = VLC.evaluateFromLos(p, grid, losAll, refl);
   const heavy = VLC.STATIC_BOXES.filter((b) => b[4] >= 2).concat(dyn.filter((b) => b[4] >= 2));
   const workersB = dyn.filter((b) => b[4] < 2);
   const r = VLC.rng(11 + S.seed), wa = new Float32Array(grid.n), wg = new Float32Array(grid.n), we = new Float32Array(grid.n);
@@ -987,14 +2263,15 @@ function compute() {
     wa[i] = o.avail; wg[i] = o.gp; we[i] = o.emi;
   }
   const free = freeMask();
+  const freeIdx = [];
   let n = 0, cv = 0, gv = 0, cw = 0, gw = 0; const snrs = [];
   for (let i = 0; i < grid.n; i++) {
-    if (!free[i]) continue; n++;
+    if (!free[i]) continue; freeIdx.push(i); n++;
     if (vlc.ber[i] <= 1e-6) cv++; gv += vlc.gp[i]; snrs.push(vlc.snr[i]);
     if (wa[i] >= 0.99) cw++; gw += wg[i];
   }
   snrs.sort((a, b) => a - b);
-  last = { p, w, refl, vlc, wa, wg, we, free, covV: 100 * cv / n, covW: 100 * cw / n, gpV: gv / n, gpW: gw / n, snrMed: snrs[snrs.length >> 1] };
+  last = { p, w, refl, losAll, boxes, heavy, workersB, vlc, wa, wg, we, free, freeIdx, covV: 100 * cv / n, covW: 100 * cw / n, gpV: gv / n, gpW: gw / n, snrMed: snrs[snrs.length >> 1] };
   render();
 }
 function render() {
@@ -1039,12 +2316,15 @@ function render() {
   dust.material.opacity = $("lyDust").checked && Number.isFinite(vis) ? Math.min(0.85, 2.2 / vis + 0.05) : 0;
   scene.fog = Number.isFinite(vis) ? new THREE.FogExp2(scene.background.getHex(), Math.min(0.09, 0.4 / vis)) : null;
   if (ovenMesh) ovenMesh.material.emissiveIntensity = Math.max(0, Math.min(1, (S.temp - 30) / 55));
-  updateProbe();
+  last.p = buildParams();
+  last.w = wifiParams();
+  updateProbe(true);
+  scheduleCharts();
 }
 
 // sonda del AGV
-let probeTimer = 0;
-function updateProbe() {
+let probeTimer = 0, lastProbe = null;
+function updateProbe(fromRender = false) {
   if (!last) return;
   const [x, y] = S.agv, z = 1;
   agv.position.copy(P3(x, y, 0));
@@ -1052,6 +2332,7 @@ function updateProbe() {
   const one = { pts: new Float64Array([x, y, z]), n: 1 };
   const refl = VLC.reflections(p, one, VLC.STATIC_BOXES, brs);
   const los = VLC.losChannel(p, x, y, z, boxes, brs);
+  lastProbe = { los, refl };
   const r = VLC.pointPerf(p, brs, los, refl, 0);
   // rayos
   rayGroup.clear();
@@ -1078,6 +2359,7 @@ function updateProbe() {
     <dt>Wi-Fi: trayecto al AP</dt><dd>${wo.los ? "despejado" : "obstruido por máquinas"}</dd>
     <dt>Wi-Fi: interferencia local</dt><dd>${fmt(wo.emi, 0)} dB sobre el ruido</dd>
     <dt>Wi-Fi: disponibilidad</dt><dd class="${wo.avail >= 0.99 ? "pass" : "failc"}">${fmt(100 * wo.avail, 1)} %</dd>`;
+  if (!fromRender && S.chartsOpen && (S.chartTab === "e2" || S.chartTab === "e6")) scheduleCharts(true);
 }
 
 // Monte Carlo
@@ -1127,6 +2409,184 @@ function runMC() {
 }
 function invalidateMC() {
   if (S.mc) { S.mc = null; $("mcOut").innerHTML = `<dt>Resultado anterior</dt><dd>descartado: cambiaste la configuración</dd>`; }
+  if (S.mcTab) { S.mcTab = null; syncChartButtons(); }
+}
+
+// ------------------------------------------------------------------ panel de gráficos dinámicos (E2–E11)
+let chartTimer = 0, lastChartData = null, tabMcRunning = false;
+function syncChartButtons() {
+  const isMcTab = S.chartTab === "e8e10";
+  $("btnTabMC").hidden = !isMcTab;
+  $("btnTabMCReset").hidden = !(isMcTab && S.mcTab && S.mcTab.valid);
+}
+function toggleCharts(open) {
+  S.chartsOpen = open;
+  $("btnCharts").setAttribute("aria-expanded", String(open));
+  $("chartsDrawer").hidden = !open;
+  $("chartsResizer").hidden = !open;
+  syncChartButtons();
+  requestAnimationFrame(() => {
+    resize();
+    if (open) scheduleCharts(true);
+  });
+}
+function renderChartsNow() {
+  if (!S.chartsOpen || !last) return;
+  const evalConfigInstant = (pCfg, idxList) => VLC.evaluateFromLos(pCfg, grid, getLosFor(pCfg), getReflFor(pCfg), idxList);
+  const ctx = {
+    V: VLC, p: last.p, w: last.w, grid, last,
+    freeIdx: last.freeIdx, boxes: last.boxes, heavy: last.heavy, workersB: last.workersB,
+    losAll: last.losAll, refl: last.refl, sfNorm, seed: S.seed, workers: S.workers,
+    agv: S.agv, probeLos: lastProbe ? lastProbe.los : null, probeRefl: lastProbe ? lastProbe.refl : null,
+    mcTab: S.mcTab, evalConfigInstant,
+  };
+  lastChartData = VLCCharts.computeTabData(S.chartTab, ctx);
+  VLCCharts.renderPanels($("chartsHost"), $("chartTip"), lastChartData);
+  syncChartButtons();
+}
+function scheduleCharts(immediate = false) {
+  if (!S.chartsOpen || !last) return;
+  clearTimeout(chartTimer);
+  if (immediate) { requestAnimationFrame(renderChartsNow); return; }
+  chartTimer = setTimeout(() => requestAnimationFrame(renderChartsNow), 45);
+}
+function runChartsMC() {
+  if (tabMcRunning || !last) return;
+  tabMcRunning = true;
+  const btn = $("btnTabMC"), prog = $("tabMcProg"), bar = prog.firstElementChild;
+  btn.disabled = true; btn.textContent = "Calculando MC…";
+  prog.hidden = false; bar.style.width = "0%";
+
+  const pCur = buildParams(), wCur = wifiParams();
+  const baseIdx = [];
+  for (let i = 0; i < grid.n; i++) if (!staticMask[i] && grid.pts[3 * i + 1] <= 13.2) baseIdx.push(i);
+  const mcIdx = VLCCharts.sampleIndices(baseIdx, 100);
+  const subGrid = { pts: new Float64Array(mcIdx.length * 3), n: mcIdx.length };
+  mcIdx.forEach((gi, k) => { subGrid.pts[3 * k] = grid.pts[3 * gi]; subGrid.pts[3 * k + 1] = grid.pts[3 * gi + 1]; subGrid.pts[3 * k + 2] = pCur.z_rx; });
+
+  // Configuraciones E8 (5 curvas) y E10 (ablación)
+  const p60 = Object.assign(VLC.defaults(), { visibility: pCur.visibility, days_dirty: pCur.days_dirty, T_amb: pCur.T_amb, I_bg: pCur.I_bg, Rb: pCur.Rb, fov_deg: 60 });
+  const p80 = Object.assign({}, p60, { fov_deg: 80 });
+  const pAdr9 = Object.assign({}, p60, { adr_enabled: true });
+  const pBase10 = Object.assign({}, p60);
+  const pFilt10 = Object.assign({}, pBase10, { use_blue_filter: true, days_dirty: Math.min(pBase10.days_dirty, 7) });
+  const pFec10 = Object.assign({}, pFilt10, { use_fec: true });
+  const pAdr16 = Object.assign(VLC.optimizedGrid(pFec10), { adr_enabled: true });
+  const wFec = Object.assign({}, wCur, { use_fec: true });
+
+  const r60 = VLC.reflections(p60, subGrid, VLC.STATIC_BOXES, VLC.branches(p60));
+  const r80 = VLC.reflections(p80, subGrid, VLC.STATIC_BOXES, VLC.branches(p80));
+  const rA9 = VLC.reflections(pAdr9, subGrid, VLC.STATIC_BOXES, VLC.branches(pAdr9));
+  const rA16 = VLC.reflections(pAdr16, subGrid, VLC.STATIC_BOXES, VLC.branches(pAdr16));
+
+  const wLevels = [0, 10, 20, 30, 40], N_RUNS = 35, totalSteps = (wLevels.length + 1) * N_RUNS;
+  const e8Keys = ["pd60", "pd80", "adr9", "wifi", "hyb"];
+  const e8Res = { pd60: [], pd80: [], adr9: [], wifi: [], hyb: [] };
+  const e10Ok = [0, 0, 0, 0, 0, 0].map(() => new Float32Array(subGrid.n));
+  const e10Cnt = new Float32Array(subGrid.n);
+  const nw10 = S.workers > 0 ? S.workers : 12;
+  const rDyn = VLC.rng(3000 + S.seed), rWf = VLC.rng(4000 + S.seed);
+
+  let phase = 0, run = 0, doneSteps = 0;
+  let curOk = null, curCnt = null;
+  const initPhase = () => {
+    curOk = {}; e8Keys.forEach((k) => { curOk[k] = new Float32Array(subGrid.n); });
+    curCnt = new Float32Array(subGrid.n);
+  };
+  initPhase();
+
+  const tick = () => {
+    const t0 = performance.now();
+    while (performance.now() - t0 < 36) {
+      if (phase < wLevels.length) {
+        const nw = wLevels[phase];
+        const d = VLC.randomDynamic(rDyn, nw, Math.floor(nw / 10), VLC.defaults());
+        const bx = VLC.STATIC_BOXES.concat(d);
+        const hv = VLC.STATIC_BOXES.filter((b) => b[4] >= 2).concat(d.filter((b) => b[4] >= 2));
+        const wk = d.filter((b) => b[4] < 2);
+        const v60 = VLC.evaluateVLC(p60, subGrid, bx, r60);
+        const v80 = VLC.evaluateVLC(p80, subGrid, bx, r80);
+        const vA9 = VLC.evaluateVLC(pAdr9, subGrid, bx, rA9);
+        for (let i = 0; i < subGrid.n; i++) {
+          if (VLC.insideAny(subGrid.pts[3 * i], subGrid.pts[3 * i + 1], d)) continue;
+          curCnt[i]++;
+          if (v60.ber[i] <= 1e-6) curOk.pd60[i]++;
+          if (v80.ber[i] <= 1e-6) curOk.pd80[i]++;
+          const a9 = vA9.ber[i] <= 1e-6;
+          if (a9) curOk.adr9[i]++;
+          const wo = VLC.wifiPoint(wCur, subGrid.pts[3 * i], subGrid.pts[3 * i + 1], 1, hv, wk, sfNorm[mcIdx[i]], rWf, 1);
+          const wg = wo.avail >= 1;
+          if (wg) curOk.wifi[i]++;
+          if (a9 || wg) curOk.hyb[i]++;
+        }
+        run++; doneSteps++;
+        if (run >= N_RUNS) {
+          for (const k of e8Keys) {
+            let n = 0, good = 0;
+            for (let i = 0; i < subGrid.n; i++) if (curCnt[i] > 0) { n++; if (curOk[k][i] / curCnt[i] >= 0.99) good++; }
+            e8Res[k].push(100 * good / Math.max(n, 1));
+          }
+          phase++; run = 0; initPhase();
+        }
+      } else if (phase === wLevels.length) {
+        const d = VLC.randomDynamic(rDyn, nw10, forklifts(nw10), VLC.defaults());
+        const bx = VLC.STATIC_BOXES.concat(d);
+        const hv = VLC.STATIC_BOXES.filter((b) => b[4] >= 2).concat(d.filter((b) => b[4] >= 2));
+        const wk = d.filter((b) => b[4] < 2);
+        const losB = VLC.losGrid(pBase10, subGrid, bx, VLC.branches(pBase10));
+        const vB = VLC.evaluateFromLos(pBase10, subGrid, losB, r60);
+        const vF = VLC.evaluateFromLos(pFilt10, subGrid, losB, r60);
+        const vC = VLC.evaluateFromLos(pFec10, subGrid, losB, r60);
+        const vA = VLC.evaluateVLC(pAdr16, subGrid, bx, rA16);
+        for (let i = 0; i < subGrid.n; i++) {
+          if (VLC.insideAny(subGrid.pts[3 * i], subGrid.pts[3 * i + 1], d)) continue;
+          e10Cnt[i]++;
+          if (vB.ber[i] <= 1e-6) e10Ok[0][i]++;
+          if (vF.ber[i] <= 1e-6) e10Ok[1][i]++;
+          if (vC.ber[i] <= 1e-6) e10Ok[2][i]++;
+          const aOk = vA.ber[i] <= 1e-6;
+          if (aOk) e10Ok[3][i]++;
+          const wo = VLC.wifiPoint(wFec, subGrid.pts[3 * i], subGrid.pts[3 * i + 1], 1, hv, wk, sfNorm[mcIdx[i]], rWf, 1);
+          const wOk = wo.avail >= 1;
+          if (wOk) e10Ok[4][i]++;
+          if (aOk || wOk) e10Ok[5][i]++;
+        }
+        run++; doneSteps++;
+        if (run >= N_RUNS) { phase++; break; }
+      } else break;
+    }
+    bar.style.width = `${Math.min(100, 100 * doneSteps / totalSteps)}%`;
+    if (phase <= wLevels.length) { setTimeout(tick, 0); return; }
+
+    const e10Pct = e10Ok.map((arr) => {
+      let n = 0, good = 0;
+      for (let i = 0; i < subGrid.n; i++) if (e10Cnt[i] > 0) { n++; if (arr[i] / e10Cnt[i] >= 0.99) good++; }
+      return 100 * good / Math.max(n, 1);
+    });
+    S.mcTab = {
+      valid: true, nRuns: N_RUNS, nw10,
+      e8Series: [
+        { label: "1-PD FOV 60°", xs: wLevels, ys: e8Res.pd60, color: "blue", width: 2, dots: true },
+        { label: "1-PD FOV 80°", xs: wLevels, ys: e8Res.pd80, color: "ok", width: 2.2, dots: true },
+        { label: "ADR 5 ramas", xs: wLevels, ys: e8Res.adr9, color: "hivis", width: 2, dashed: true, dots: true },
+        { label: "Wi-Fi (EMI)", xs: wLevels, ys: e8Res.wifi, color: "rf", width: 2, dashed: true, dots: true },
+        { label: "Híbrido", xs: wLevels, ys: e8Res.hyb, color: "ink", width: 2.3, dots: true },
+      ],
+      e10Bars: [
+        { label: "1. Base\n3×3", value: e10Pct[0], color: "fail" },
+        { label: "2. +Filtro\n+≤7 d", value: e10Pct[1], color: "hivis" },
+        { label: "3. +RS\nFEC", value: e10Pct[2], color: "safety" },
+        { label: "4. +ADR\n4×4", value: e10Pct[3], color: "ok" },
+        { label: "5. Wi-Fi\n+FEC", value: e10Pct[4], color: "rf" },
+        { label: "6. Híbrido\nVLC+RF", value: e10Pct[5], color: "blue" },
+      ],
+    };
+    tabMcRunning = false;
+    btn.disabled = false; btn.textContent = "Monte Carlo (E8/E10)";
+    prog.hidden = true;
+    renderChartsNow();
+  };
+  setTimeout(tick, 15);
 }
 
 // ------------------------------------------------------------------ interfaz
@@ -1198,6 +2658,39 @@ $("lyCones").addEventListener("change", (e) => { coneGroup.visible = e.target.ch
 $("lyLabels").addEventListener("change", (e) => { labels.visible = e.target.checked; });
 $("btnMC").addEventListener("click", runMC);
 $("btnHelp").addEventListener("click", () => $("help").showModal());
+$("btnCharts").addEventListener("click", () => toggleCharts(!S.chartsOpen));
+$("btnChartsClose").addEventListener("click", () => toggleCharts(false));
+$("chartTabs").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  S.chartTab = b.dataset.tab;
+  $("chartTabs").querySelectorAll("button").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+  syncChartButtons();
+  scheduleCharts(true);
+});
+$("btnTabMC").addEventListener("click", runChartsMC);
+$("btnTabMCReset").addEventListener("click", () => { S.mcTab = null; syncChartButtons(); scheduleCharts(true); });
+
+// separador arrastrable entre escena 3D y panel de gráficos
+(() => {
+  const rz = $("chartsResizer"), dr = $("chartsDrawer"), col = $("centerCol");
+  let active = false;
+  rz.addEventListener("pointerdown", (ev) => {
+    active = true; rz.classList.add("drag"); rz.setPointerCapture(ev.pointerId);
+  });
+  rz.addEventListener("pointermove", (ev) => {
+    if (!active) return;
+    const rect = col.getBoundingClientRect();
+    const h = Math.min(Math.max(rect.bottom - ev.clientY, 200), rect.height * 0.74);
+    dr.style.height = Math.round(h) + "px";
+  });
+  const stop = () => { if (active) { active = false; rz.classList.remove("drag"); } };
+  rz.addEventListener("pointerup", stop);
+  rz.addEventListener("pointercancel", stop);
+})();
+
+new ResizeObserver(() => {
+  if (S.chartsOpen && lastChartData) VLCCharts.renderPanels($("chartsHost"), $("chartTip"), lastChartData);
+}).observe($("chartsHost"));
 
 // arrastre del AGV
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);

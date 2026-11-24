@@ -106,7 +106,8 @@ La ventaja de eficiencia de VLC es real solo si el driver de modulación consume
 - **Física:** `web/vlc_physics.js` es un port directo de `vlc_core.py` con el modelo de ojo (canal LOS con bloqueo, reflexiones de primer orden, polvo con scattering, suciedad, temperatura de unión, ruido, ancho de banda del LED, RS-FEC, ADR con MRC, Wi-Fi 3GPP InF-SH + Middleton Class A).
 - **Validación:** `node web/validar_contra_python.js` compara con `web/referencia_python.json` (generado por `python web/generar_referencia.py`). En seis escenarios las diferencias son menores a 0,05 dB en la mediana y nulas en cobertura; Wi-Fi coincide dentro del ruido Monte Carlo.
 - **Simplificación declarada:** en la web, operarios y grúas bloquean la línea de vista pero no las reflexiones en paredes (en Python sí, en S4/S5).
-- **Construcción:** `python web/build.py` inserta la física en `web/index.template.html` y escribe `docs/index.html` (autocontenido; Three.js r128 y fuentes desde CDN).
+- **Gráficos dinámicos `E2–E11`:** botón **Gráficos** en la barra superior que despliega un panel redimensionable justo debajo de la escena 3D (`web/vlc_charts.js`, Canvas 2D puro sin dependencias). Recalcula en vivo las curvas contextuales (`E2` impulso y `E6b` ruido siguiendo al AGV, `E3` CDF, `E4` polvo, `E5` suciedad, `E6a` calor, `E7` tasa/goodput, `E9` VLC vs Wi-Fi, `E11` eficiencia y `E8/E10` ablación instantánea + Monte Carlo bajo demanda), validado con `node web/validar_graficos.js`.
+- **Construcción:** `python web/build.py` inserta `vlc_physics.js` y `vlc_charts.js` en `web/index.template.html` y escribe `docs/index.html` (autocontenido; Three.js r128 y fuentes desde CDN).
 - **Despliegue:** GitHub Pages con origen `main` → carpeta `/docs` (ver README).
 
 ## 8. Recomendaciones pendientes

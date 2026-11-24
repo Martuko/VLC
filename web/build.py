@@ -11,7 +11,8 @@ import pathlib
 here = pathlib.Path(__file__).resolve().parent
 tpl = (here / "index.template.html").read_text(encoding="utf-8")
 phys = (here / "vlc_physics.js").read_text(encoding="utf-8")
-out = tpl.replace("/*__PHYSICS__*/", phys)
+charts = (here / "vlc_charts.js").read_text(encoding="utf-8")
+out = tpl.replace("/*__PHYSICS__*/", phys).replace("/*__CHARTS__*/", charts)
 dest = here.parent / "docs" / "index.html"
 dest.write_text(out, encoding="utf-8")
 (here.parent / "docs" / ".nojekyll").write_text("", encoding="utf-8")

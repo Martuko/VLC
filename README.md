@@ -4,7 +4,7 @@
 **Integrantes:** *(Completar nombres de integrantes)*  
 **Semestre:** 2026
 
-**Simulador 3D en el navegador:** abre `docs/index.html` o publícalo con GitHub Pages (ver más abajo). Permite mover un AGV por la nave, cambiar polvo, calor, luz ambiente, operarios, tasa, filtro, FEC y receptor, y comparar en vivo con Wi-Fi bajo interferencia electromagnética.
+**Simulador 3D en el navegador:** abre `docs/index.html` o publícalo con GitHub Pages (ver más abajo). Permite mover un AGV por la nave, cambiar polvo, calor, luz ambiente, operarios, tasa, filtro, FEC y receptor, desplegar un **panel dinámico de gráficos (`E2–E11`)** debajo del modelo 3D y comparar en vivo con Wi-Fi bajo interferencia electromagnética.
 
 > **Revisión técnica 2 (noviembre 2026).** Se corrigió el modelo de interferencia intersimbólica (ahora por apertura de ojo con muestreo óptimo), que dejaba el enlace saturado por ISI; se reemplazó una referencia no verificable; se agregó el experimento E11 y el simulador 3D web. Detalle completo en [docs/REVISION_TECNICA.md](docs/REVISION_TECNICA.md).
 
@@ -38,8 +38,8 @@ El sistema comunica en tiempo real consignas de navegación, telemetría y diagn
 | [run_all.py](run_all.py) | Ejecuta los 11 experimentos (`E1–E11`) con semilla fija (`2023`) y guarda 14 figuras PNG, 8 archivos CSV (incluido `resumen_resultados.csv`) y `log_ejecucion.txt` en `resultados/`. Tarda ≈ 3 min. |
 | [demo_interactiva.py](demo_interactiva.py) | Demostración en vivo para presentación oral (~7 s de arranque): controles de polvo, limpieza, temperatura ($T_j$), luz ambiente, operarios, tasa y conmutadores de **Filtro azul**, **RS-FEC**, **ADR + 4×4** y **mapa Wi-Fi bajo EMI**. |
 | [tests/test_vlc_core.py](tests/test_vlc_core.py) | Suite de 16 pruebas unitarias físicas (`pytest`): monotonicidad ante polvo, EN 12464-1, LED/ADR/FEC/Middleton, y (revisión 2) que los obstáculos nunca mejoren la SNR y que calor y luz ambiente sí la reduzcan. |
-| [docs/index.html](docs/index.html) | **Simulador 3D web** autocontenido (Three.js). Se construye con `python web/build.py` desde `web/`. |
-| [web/](web/) | Fuente del simulador web: `vlc_physics.js` (port de `vlc_core.py`), `index.template.html`, `build.py` y la validación contra Python (`generar_referencia.py`, `validar_contra_python.js`). |
+| [docs/index.html](docs/index.html) | **Simulador 3D web** autocontenido (Three.js + panel desplegable de gráficos dinámicos `E2–E11` en Canvas 2D). Se construye con `python web/build.py` desde `web/`. |
+| [web/](web/) | Fuente del simulador web: `vlc_physics.js` (port de `vlc_core.py`), `vlc_charts.js` (gráficos dinámicos `E2–E11` sin dependencias), `index.template.html`, `build.py` y las validaciones contra Python (`generar_referencia.py`, `validar_contra_python.js`, `validar_graficos.js`). |
 | [docs/REVISION_TECNICA.md](docs/REVISION_TECNICA.md) | Revisión técnica 2: hallazgos, correcciones, verificación de referencias y resultados antes/después. |
 | [docs/MARCO_TEORICO_Y_MODELOS.md](docs/MARCO_TEORICO_Y_MODELOS.md) | Derivación detallada de ecuaciones, contexto industrial y tabla de trazabilidad 1 a 1 a artículos de IEEE Xplore, ScienceDirect, MDPI, Optica y estándares. |
 | [docs/REGISTRO_DE_MEJORAS.md](docs/REGISTRO_DE_MEJORAS.md) | Bitácora técnica completa (Antes vs. Después) documentando cada corrección física, metodológica y de software respecto a la versión inicial. |
@@ -67,7 +67,7 @@ python demo_interactiva.py
 
 # 4. Simulador 3D web: reconstruir y validar contra Python (requiere Node.js)
 python web/build.py
-python web/generar_referencia.py && node web/validar_contra_python.js
+python web/generar_referencia.py && node web/validar_contra_python.js && node web/validar_graficos.js
 ```
 
 ### Publicar el simulador 3D con GitHub Pages
